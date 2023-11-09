@@ -43,7 +43,7 @@ export default class APIServer {
     }
     startupMessage() {
         log(FgGreen, "************************************");
-        log(FgGreen, "* API SERVER - version beta - 1.92 *");
+        log(FgGreen, "* API SERVER - version beta - 2.00 *");
         log(FgGreen, "************************************");
         log(FgGreen, "* Author: Nicolas Chourot          *");
         log(FgGreen, "* Lionel-Groulx College            *");

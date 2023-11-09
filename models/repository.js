@@ -100,7 +100,6 @@ export default class Repository {
         return object;
     }
     update(id, objectToModify) {
-        objectToModify = {...objectToModify };
         delete objectToModify.Id;
         objectToModify = { Id: id, ...objectToModify };
         this.model.validate(objectToModify);
@@ -163,7 +162,7 @@ export default class Repository {
             for (let object of this.objects()) {
                 try {
                     if (object[fieldName] === value) {
-                        if (object.Id != excludedId) return this.objectsList[index];
+                        if (object.Id != excludedId) return {...this.objectsList[index]};
                     }
                     index++;
                 } catch (error) { break; }

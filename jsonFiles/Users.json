@@ -58,8 +58,8 @@
         "Avatar": "f5795080-4468-11ee-8281-2f600646bb7f.jpeg",
         "Name": "Nicolas Chourot",
         "Email": "nicolaschourot@videotron.ca",
-        "Password": "password",
-        "Created": 1699479415,
+        "Password": "********",
+        "Created": 1699523187,
         "VerifyCode": "verified"
     }
 ]
