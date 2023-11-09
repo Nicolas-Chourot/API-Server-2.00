@@ -47,7 +47,7 @@ export default class APIServer {
         log(FgGreen, "************************************");
         log(FgGreen, "* Author: Nicolas Chourot          *");
         log(FgGreen, "* Lionel-Groulx College            *");
-        log(FgGreen, "* Release date: october 2023       *");
+        log(FgGreen, "* Release date: november 2023      *");
         log(FgGreen, "************************************");
         log(FgWhite, BgGreen, `HTTP Server running on port ${this.port}...`);
         this.showMemoryUsage();

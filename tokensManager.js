@@ -15,7 +15,7 @@ class TokensManager {
         let token = Token.create(user);
         token.Expire_Time = utilities.nowInSeconds() + tokenLifeDuration;
         tokensRepository.add(token);
-        console.log("User " + token.Username + " logged in");
+        console.log("User " + token.User.Username + " logged in");
         return token;
     }
     static logout(userId) {
@@ -25,7 +25,7 @@ class TokensManager {
         for (let token of tokens) {
             if (token.UserId == userId) {
                 indexToDelete.push(index);
-                console.log("User " + token.Username + " logged out");
+                console.log("User " + token.User.Username + " logged out");
             }
             index++;
         }
@@ -39,7 +39,7 @@ class TokensManager {
         for (let token of tokens) {
             if (token.Expire_Time < now) {
                 indexToDelete.push(index);
-                console.log("Access token of user " + token.Username + " expired");
+                console.log("Access token of user " + token.User.Username + " expired");
             }
             index++;
         }
@@ -56,14 +56,7 @@ class TokensManager {
         }
         return null;
     }
-    static requestAuthorized(req) {
-        if (req.headers["authorization"] != undefined) {
-            // Extract bearer token from head of the http request
-            let token = req.headers["authorization"].replace('Bearer ', '');
-            return (this.find(token) != null);
-        }
-        return false;
-    }
+    
     static getToken(req) {
         if (req.headers["authorization"] != undefined) {
             // Extract bearer token from head of the http request

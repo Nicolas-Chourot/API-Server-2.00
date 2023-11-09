@@ -1,22 +1,12 @@
-import TokenManager from '../tokensManager.js';
+import Authorizations from '../authorizations.js';
 
 export default class Controller {
-    constructor(HttpContext, repository = null, needReadAuthorization = false, needWriteAuthorization = true) {
-        this.needReadAuthorization = needReadAuthorization;
-        this.needWriteAuthorization = needWriteAuthorization;
+    constructor(HttpContext, repository = null, authorizations = null) {
+        this.authorizations = authorizations ? authorizations : Authorizations.anonymous();
         this.HttpContext = HttpContext;
         this.repository = repository;
     }
-    readAuthorization() {
-        if (this.needReadAuthorization)
-            return TokenManager.requestAuthorized(this.HttpContext.req)
-        return true
-    }
-    writeAuthorization() {
-        if (this.needWriteAuthorization)
-            return TokenManager.requestAuthorized(this.HttpContext.req)
-        return true;
-    }
+    
     head() {
         if (this.repository != null) {
             this.HttpContext.response.ETag(this.repository.ETag);
@@ -24,7 +14,7 @@ export default class Controller {
             this.HttpContext.response.notImplemented();
     }
     get(id) {
-        if (this.readAuthorization()) {
+        if (Authorizations.granted(this.HttpContext, this.authorizations)) {
             if (this.repository != null) {
                 if (id !== undefined) {
                     if (!isNaN(id)) {
@@ -36,14 +26,14 @@ export default class Controller {
                     } else
                         this.HttpContext.response.badRequest("The Id in the request url is rather not specified or syntactically wrong.");
                 } else
-                    this.HttpContext.response.JSON(this.repository.getAll(this.HttpContext.path.params), this.repository.ETag, true, this.needReadAuthorization);
+                    this.HttpContext.response.JSON(this.repository.getAll(this.HttpContext.path.params), this.repository.ETag, false, this.authorizations);
             } else
                 this.HttpContext.response.notImplemented();
         } else
             this.HttpContext.response.unAuthorized();
     }
     post(data) {
-        if (this.writeAuthorization()) {
+        if (Authorizations.granted(this.HttpContext, this.authorizations)) {
             if (this.repository != null) {
                 data = this.repository.add(data);
                 if (this.repository.model.state.isValid) {
@@ -60,7 +50,7 @@ export default class Controller {
             this.HttpContext.response.unAuthorized();
     }
     put(data) {
-        if (this.writeAuthorization()) {
+        if (Authorizations.granted(this.HttpContext, this.authorizations)) {
             if (this.repository != null) {
                 if (!isNaN(this.HttpContext.path.id)) {
                     this.repository.update(this.HttpContext.path.id, data);
@@ -84,7 +74,7 @@ export default class Controller {
             this.HttpContext.response.unAuthorized();
     }
     remove(id) {
-        if (this.writeAuthorization()) {
+        if (Authorizations.grantedthis.HttpContext, (this.authorizations)) {
             if (this.repository != null) {
                 if (!isNaN(this.HttpContext.path.id)) {
                     if (this.repository.remove(id))

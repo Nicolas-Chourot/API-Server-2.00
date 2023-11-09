@@ -8,7 +8,7 @@ import * as AssetsRepository from '../assetsManager.js';
 export default class Model {
     constructor() {
         this.fields = [];
-        this.addField('Id', 'integer');
+        this.addField('Id', 'object');
         this.key = null;
         this.state = { isValid: true, inConflict: false, notFound: false, errors: [] };
     }
@@ -42,6 +42,7 @@ export default class Model {
                 case "email": return /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/.test(value);
                 case "url": return /(http|https):\/\/(\w+:{0,1}\w*)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%!\-\/]))?/.test(value);
                 case "zipcode": return /^[a-zA-Z][0-9]+[a-zA-Z]\s[0-9]+[a-zA-Z][0-9]+$/.test(value);
+                case "object": return true;
                 case "asset": return true; // todo verify if it's a blob
                 default: return false;
             }

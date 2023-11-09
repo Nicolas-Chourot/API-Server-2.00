@@ -85,11 +85,13 @@ export const decomposePath = (url) => {
             action = 'index';
 
         if (urlParts[3] != undefined) {
-            id = parseInt(urlParts[3]);
+           // id = parseInt(urlParts[3]);
+           id= urlParts[3];
         }
     } else {
         if (urlParts[2] != undefined) {
-            id = parseInt(urlParts[2]);
+            // id = parseInt(urlParts[2]);
+            id= urlParts[2];
         }
     }
     return { isAPI, model, controllerName, action, id, queryString, params };

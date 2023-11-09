@@ -5,16 +5,14 @@ export default class Token extends Model {
     constructor() {
         super();
         this.addField('Access_token', 'string');
-        this.addField('UserId', 'integer');
-        this.addField('Username', 'string');
+        this.addField('User', 'object');
     }
    static create(user = null) {
         let token = {};
         if (user) {
             token.Id = 0;
             token.Access_token = makeToken(user.Email);
-            token.UserId = user.Id;
-            token.Username = user.Name;
+            token.User = user;
         }
         return token;
     }

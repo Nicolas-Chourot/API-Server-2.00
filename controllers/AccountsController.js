@@ -4,19 +4,22 @@ import TokenManager from '../tokensManager.js';
 import * as utilities from "../utilities.js";
 import Gmail from "../gmail.js";
 import Controller from './Controller.js';
-import HttpContext from '../httpContext.js';
+import Authorizations from '../authorizations.js';
 
 export default class AccountsController extends Controller {
     constructor(HttpContext) {
-        super(HttpContext, new Repository(new UserModel()), true /* read authorisation */, true);
+        super(HttpContext, new Repository(new UserModel()), Authorizations.admin());
     }
     index(id) {
         if (!isNaN(id)) {
-            this.HttpContext.response.JSON(this.repository.get(id));
+            if (Authorizations.granted(this.HttpContext, Authorizations.admin()))
+                this.HttpContext.response.JSON(this.repository.get(id));
+            else
+                this.HttpContext.response.unAuthorized();
         }
         else {
-            if (this.readAuthorization())
-                this.HttpContext.response.JSON(this.repository.getAll());
+            if (Authorizations.granted(this.HttpContext, Authorizations.admin()))
+                this.HttpContext.response.JSON(this.repository.getAll(this.HttpContext.path.params), this.repository.ETag, true, Authorizations.admin());
             else
                 this.HttpContext.response.unAuthorized();
         }
@@ -33,11 +36,11 @@ export default class AccountsController extends Controller {
                     } else {
                         this.HttpContext.response.wrongPassword();
                     }
-                } else 
-                    this.HttpContext.response.userNotFound();
+                } else
+                    this.HttpContext.response.userNotFound("This user email is not found.");
             } else
                 this.HttpContext.response.notImplemented();
-        } else 
+        } else
             this.HttpContext.response.badRequest("Credential Email and password are missing.");
     }
     logout(userId) {
@@ -68,7 +71,7 @@ export default class AccountsController extends Controller {
     //GET : /accounts/verify?id=...&code=.....
     verify() {
         if (this.repository != null) {
-            let id = parseInt(this.HttpContext.path.params.id);
+            let id = this.HttpContext.path.params.id;
             let code = parseInt(this.HttpContext.path.params.code);
             let userFound = this.repository.findByField('Id', id);
             if (userFound) {
@@ -96,6 +99,7 @@ export default class AccountsController extends Controller {
         if (this.repository != null) {
             user.Created = utilities.nowInSeconds();
             user.VerifyCode = utilities.makeVerifyCode(6);
+            user.Authorizations = Authorizations.user();
             let newUser = this.repository.add(user);
             if (this.repository.model.state.isValid) {
                 newUser.Password = "********";
@@ -112,7 +116,7 @@ export default class AccountsController extends Controller {
     }
     // PUT:account/modify body payload[{"Id": 0, "Name": "...", "Email": "...", "Password": "..."}]
     modify(user) {
-        if (this.writeAuthorization()) {
+        if (Authorizations.granted(this.HttpContext, Authorizations.user())) {
             if (this.repository != null) {
                 user.Created = utilities.nowInSeconds();
                 let foundedUser = this.repository.findByField("Id", user.Id);
@@ -149,7 +153,8 @@ export default class AccountsController extends Controller {
     // GET:account/remove/id
     remove(id) { // warning! this is not an API endpoint
         // this.deleteAllUsersImages(id)
-        super.remove(id);
+        if (Authorizations.granted(this.HttpContext, Authorizations.user()))
+            super.remove(id);
     }
     deleteAllUsersImages(userId) {
         let imagesRepository = new ImagesRepository(this.req, true);

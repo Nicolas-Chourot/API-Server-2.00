@@ -3,15 +3,16 @@ import * as utilities from './utilities.js';
 import TokenManager from './tokensManager.js';
 import * as serverVariables from "./serverVariables.js";
 import { log } from "./log.js";
+import Authorizations from './authorizations.js';
 global.requestCacheExpirationTime = serverVariables.get("main.requestCache.expirationTime");
 
 // Get requests cache
 global.CachedRequests = [];
 
 export default class CachedRequestsManager {
-    static add(url, content, ETag = "", readAuthorization = false) {
+    static add(url, content, ETag = "", authorization = null) {
         if (url != "") {
-            CachedRequests.push({ url, content, ETag, readAuthorization, Expire_Time: utilities.nowInSeconds() + requestCacheExpirationTime });
+            CachedRequests.push({ url, content, ETag, authorization, Expire_Time: utilities.nowInSeconds() + requestCacheExpirationTime });
             log(BgCyan, FgWhite, "Response content of request Get: ", url, " added in requests cache");
         }
     }
@@ -46,16 +47,16 @@ export default class CachedRequestsManager {
         }
         CachedRequests = CachedRequests.filter(endpoint => endpoint.Expire_Time > now);
     }
-    static readAuthorization(readAuthorization, HttpContext) {
+    static readAuthorization(HttpContext, readAuthorization) {
         if (readAuthorization)
-            return TokenManager.requestAuthorized(HttpContext.req)
+            return TokenManager.requestAuthorized(HttpContext, Authorizations);
         return true
     }
     static get(HttpContext) {
         if (HttpContext.req.method == 'GET') {
             let cacheFound = CachedRequestsManager.find(HttpContext.req.url);
             if (cacheFound != null) {
-                if (CachedRequestsManager.readAuthorization(cacheFound.readAuthorization, HttpContext)) {
+                if (CachedRequestsManager.readAuthorization(HttpContext, cacheFound.authorization)) {
                     HttpContext.response.JSON(cacheFound.content, cacheFound.ETag, true);
                     return true;
                 }
