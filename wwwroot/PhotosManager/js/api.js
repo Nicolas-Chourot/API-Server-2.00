@@ -83,7 +83,10 @@ class API {
                 type: 'GET',
                 contentType: 'text/plain',
                 data: {},
-                success: () => { resolve(true); },
+                success: (profil) => { 
+                    API.storeLoggedUser(profil);
+                    resolve(true); 
+                },
                 error: xhr => { API.setHttpErrorState(xhr); resolve(false); }
             });
         });

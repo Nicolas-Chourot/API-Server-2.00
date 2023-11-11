@@ -78,9 +78,9 @@ export default class AccountsController extends Controller {
             if (userFound) {
                 if (userFound.VerifyCode == code) {
                     userFound.VerifyCode = "verified";
-                    this.repository.update(userFound.Id, userFound);
+                    userFound = this.repository.update(userFound.Id, userFound);
                     if (this.repository.model.state.isValid) {
-                        this.HttpContext.response.ok();
+                        this.HttpContext.response.updated(userFound);
                         this.sendConfirmedEmail(userFound);
                     } else {
                         this.HttpContext.response.unprocessable();
@@ -122,19 +122,19 @@ export default class AccountsController extends Controller {
                 let foundedUser = this.repository.findByField("Id", user.Id);
                 if (foundedUser != null) {
                     user.Authorizations = foundedUser.Authorizations; // user cannot change its own authorizations
-                    user.VerifyCode = foundedUser.VerifyCode
+                    user.VerifyCode = foundedUser.VerifyCode;
                     if (user.Password == '') { // password not changed
                         user.Password = foundedUser.Password;
                     }
                     user.Authorizations = foundedUser.Authorizations;
+                    if (user.Email != foundedUser.Email) {
+                        user.VerifyCode = utilities.makeVerifyCode(6);
+                        this.sendVerificationEmail(user);
+                    }
                     let updatedUser = this.repository.update(user.Id, user);
                     if (this.repository.model.state.isValid) {
                         this.HttpContext.response.updated(updatedUser);
-                        if (user.Email != foundedUser.Email) {
-                            user.VerifyCode = utilities.makeVerifyCode(6);
-                            this.repository.update(user);
-                            this.sendVerificationEmail(user);
-                        }
+                       
                         // users have a link to imagesRepository
                         // let imagesRepository = new ImagesRepository();
                         // imagesRepository.newETag();

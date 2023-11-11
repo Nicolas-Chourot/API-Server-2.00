@@ -15,7 +15,7 @@ function Init_UI() {
         saveContentScrollPosition();
         renderCreateContactForm();
     });
-   
+
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -123,12 +123,27 @@ async function login(credential) {
             default: loginMessage = "Le serveur ne répond pas"; break;
         }
         renderLoginForm();
-    } else
-        renderPhotos();
+    } else {
+        let loggedUser = API.retrieveLoggedUser();
+        if (loggedUser.VerifyCode == 'verified')
+            renderPhotos();
+        else
+            renderVerify();
+    }
 }
-
+function isVerified() {
+    let loggedUser = API.retrieveLoggedUser();
+    return loggedUser.VerifyCode == "verified";
+}
+async function verify(verifyCode) {
+    let loggedUser = API.retrieveLoggedUser();
+    if (await API.verifyEmail(loggedUser.Id, verifyCode)) {
+        renderPhotos();
+    } else {
+        renderError("Désolé votre code n'est pas valide...");
+    }
+}
 async function editProfil(profil) {
-    console.log(profil);
     await API.modifyUserProfil(profil);
     renderPhotos();
 }
@@ -173,30 +188,33 @@ function renderAbout() {
         `))
 }
 async function renderPhotos() {
-    showWaitingGif();
-    UpdateHeader('Liste des photos', 'photoList')
-    $("#addPhoto").show();
-    $("#abort").hide();
-    /*let contacts = await API_GetContacts();
-    
-    if (contacts !== null) {
-        contacts.forEach(contact => {
-            $("#content").append(renderContact(contact));
-        });
-        restoreContentScrollPosition();
-        // Attached click events on command icons
-        $(".editCmd").on("click", function () {
-            saveContentScrollPosition();
-            renderEditContactForm($(this).attr("editContactId"));
-        });
-        $(".deleteCmd").on("click", function () {
-            saveContentScrollPosition();
-            renderDeleteContactForm($(this).attr("deleteContactId"));
-        });
-        $(".contactRow").on("click", function (e) { e.preventDefault(); })
-    } else {
-        renderError("Service introuvable");
-    }*/
+    if (isVerified()) {
+        showWaitingGif();
+        UpdateHeader('Liste des photos', 'photoList')
+        $("#addPhoto").show();
+        $("#abort").hide();
+        /*let contacts = await API_GetContacts();
+        
+        if (contacts !== null) {
+            contacts.forEach(contact => {
+                $("#content").append(renderContact(contact));
+            });
+            restoreContentScrollPosition();
+            // Attached click events on command icons
+            $(".editCmd").on("click", function () {
+                saveContentScrollPosition();
+                renderEditContactForm($(this).attr("editContactId"));
+            });
+            $(".deleteCmd").on("click", function () {
+                saveContentScrollPosition();
+                renderDeleteContactForm($(this).attr("deleteContactId"));
+            });
+            $(".contactRow").on("click", function (e) { e.preventDefault(); })
+        } else {
+            renderError("Service introuvable");
+        }*/
+    } else
+        renderVerify();
 }
 function renderError(message) {
     eraseContent();
@@ -267,6 +285,33 @@ function newContact() {
     contact.Phone = "";
     contact.Email = "";
     return contact;
+}
+function renderVerify() {
+    eraseContent();
+    $("#addPhoto").hide();
+    UpdateHeader("Vérification", "verify");
+    $("#content").append(`
+        <div class="content">
+            <h3>${loginMessage}</h3>
+            <form class="form" id="verifyForm">
+                <input  type='text' 
+                        name='Code'
+                        class="form-control"
+                        required
+                        RequireMessage = 'Veuillez entrer le code que vous avez reçu par courriel'
+                        InvalidMessage = 'Courriel invalide';
+                        placeholder="Code de vérification de courriel" > 
+                <input type='submit' name='submit' value="Vérifier" class="form-control btn-primary">
+            </form>
+        </div>
+    `);
+    initFormValidation(); // important do to after all html injection!
+    $('#verifyForm').on("submit", function (event) {
+        let verifyForm = getFormData($('#verifyForm'));
+        event.preventDefault();
+        showWaitingGif();
+        verify(verifyForm.Code);
+    });
 }
 function renderEditProfil() {
     let loggedUser = API.retrieveLoggedUser();
@@ -373,7 +418,6 @@ function renderLoginForm() {
     $("#addPhoto").hide();
     UpdateHeader("Connexion", "Login");
     $("#content").append(`
-        
         <div class="content">
             <h3>${loginMessage}</h3>
             <form class="form" id="loginForm">
@@ -403,7 +447,7 @@ function renderLoginForm() {
         </div>
     `);
     initFormValidation(); // important do to after all html injection!
-   
+
     $('#loginForm').on("submit", function (event) {
         let credential = getFormData($('#loginForm'));
         event.preventDefault();
@@ -489,7 +533,6 @@ function renderContactForm(contact = null) {
         renderContacts();
     });
 }
-
 function getFormData($form) {
     const removeTag = new RegExp("(<[a-zA-Z0-9]+>)|(</[a-zA-Z0-9]+>)", "g");
     var jsonObject = {};
@@ -499,7 +542,6 @@ function getFormData($form) {
     });
     return jsonObject;
 }
-
 function renderContact(contact) {
     return $(`
      <div class="contactRow" contact_id=${contact.Id}">
