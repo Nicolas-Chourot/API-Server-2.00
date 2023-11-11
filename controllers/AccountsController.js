@@ -31,10 +31,11 @@ export default class AccountsController extends Controller {
                 let user = this.repository.findByField("Email", loginInfo.Email);
                 if (user != null) {
                     if (user.Password == loginInfo.Password) {
+                        user = this.repository.get(user.Id);
                         let newToken = TokenManager.create(user);
-                        this.HttpContext.response.JSON(newToken);
+                        this.HttpContext.response.created(newToken);
                     } else {
-                        this.HttpContext.response.wrongPassword();
+                        this.HttpContext.response.wrongPassword("Wrong password.");
                     }
                 } else
                     this.HttpContext.response.userNotFound("This user email is not found.");
@@ -102,7 +103,6 @@ export default class AccountsController extends Controller {
             user.Authorizations = Authorizations.user();
             let newUser = this.repository.add(user);
             if (this.repository.model.state.isValid) {
-                newUser.Password = "********";
                 this.HttpContext.response.created(newUser);
                 this.sendVerificationEmail(newUser);
             } else {
@@ -125,9 +125,9 @@ export default class AccountsController extends Controller {
                     if (user.Password == '') { // password not changed
                         user.Password = foundedUser.Password;
                     }
-                    this.repository.update(user);
+                    let updatedUser = this.repository.update(user);
                     if (this.repository.model.state.isValid) {
-                        this.HttpContext.response.ok();
+                        this.HttpContext.response.updated(updatedUser);
                         if (user.Email != foundedUser.Email) {
                             user.VerifyCode = utilities.makeVerifyCode(6);
                             this.repository.update(user);
@@ -157,7 +157,7 @@ export default class AccountsController extends Controller {
             super.remove(id);
     }
     deleteAllUsersImages(userId) {
-        let imagesRepository = new ImagesRepository(this.req, true);
+        /*let imagesRepository = new ImagesRepository(this.req, true);
         let images = imagesRepository.getAll();
         let indexToDelete = [];
         let index = 0;
@@ -167,7 +167,7 @@ export default class AccountsController extends Controller {
             index++;
         }
         imagesRepository.removeByIndex(indexToDelete);
-        imagesRepository.newETag();
+        imagesRepository.newETag();*/
     }
 
 }

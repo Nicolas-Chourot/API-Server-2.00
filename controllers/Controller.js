@@ -6,7 +6,7 @@ export default class Controller {
         this.HttpContext = HttpContext;
         this.repository = repository;
     }
-    
+
     head() {
         if (this.repository != null) {
             this.HttpContext.response.ETag(this.repository.ETag);
@@ -17,14 +17,11 @@ export default class Controller {
         if (Authorizations.granted(this.HttpContext, this.authorizations)) {
             if (this.repository != null) {
                 if (id !== undefined) {
-                    if (!isNaN(id)) {
-                        let data = this.repository.get(id);
-                        if (data != null)
-                            this.HttpContext.response.JSON(data);
-                        else
-                            this.HttpContext.response.notFound("Ressource not found.");
-                    } else
-                        this.HttpContext.response.badRequest("The Id in the request url is rather not specified or syntactically wrong.");
+                    let data = this.repository.get(id);
+                    if (data != null)
+                        this.HttpContext.response.JSON(data);
+                    else
+                        this.HttpContext.response.notFound("Ressource not found.");
                 } else
                     this.HttpContext.response.JSON(this.repository.getAll(this.HttpContext.path.params), this.repository.ETag, false, this.authorizations);
             } else
@@ -52,10 +49,10 @@ export default class Controller {
     put(data) {
         if (Authorizations.granted(this.HttpContext, this.authorizations)) {
             if (this.repository != null) {
-                if (!isNaN(this.HttpContext.path.id)) {
-                    this.repository.update(this.HttpContext.path.id, data);
+                if (this.HttpContext.path.id) {
+                    let updatedData = this.repository.update(this.HttpContext.path.id, data);
                     if (this.repository.model.state.isValid) {
-                        this.HttpContext.response.ok();
+                        this.HttpContext.response.updated(updatedData);
                     } else {
                         if (this.repository.model.state.notFound) {
                             this.HttpContext.response.notFound(this.repository.model.state.errors);
@@ -74,9 +71,9 @@ export default class Controller {
             this.HttpContext.response.unAuthorized();
     }
     remove(id) {
-        if (Authorizations.grantedthis.HttpContext, (this.authorizations)) {
+        if (Authorizations.granted(this.HttpContext, this.authorizations)) {
             if (this.repository != null) {
-                if (!isNaN(this.HttpContext.path.id)) {
+                if (this.HttpContext.path.id) {
                     if (this.repository.remove(id))
                         this.HttpContext.response.accepted();
                     else

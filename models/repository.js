@@ -93,7 +93,7 @@ export default class Repository {
                 this.write();
             }
         }
-        return object;
+        return this.model.bindExtraData(object);
     }
     update(id, objectToModify) {
         delete objectToModify.Id;
@@ -113,7 +113,7 @@ export default class Repository {
                 this.model.state.notFound = true;
             }
         }
-        return objectToModify;
+        return this.model.bindExtraData(objectToModify);
     }
     remove(id) {
         let index = 0;

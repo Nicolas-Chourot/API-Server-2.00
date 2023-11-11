@@ -8,8 +8,8 @@
         "Created": 1699549490,
         "VerifyCode": "verified",
         "Authorizations": {
-            "readAccess": 2,
-            "writeAccess": 2
+            "readAccess": 1,
+            "writeAccess": 1
         }
     }
 ]
