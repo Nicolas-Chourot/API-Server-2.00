@@ -116,6 +116,7 @@ export default class AccountsController extends Controller {
     }
     // PUT:account/modify body payload[{"Id": 0, "Name": "...", "Email": "...", "Password": "..."}]
     modify(user) {
+        // empty asset members imply no change and there values will be taken from the stored record
         if (Authorizations.granted(this.HttpContext, Authorizations.user())) {
             if (this.repository != null) {
                 user.Created = utilities.nowInSeconds();
