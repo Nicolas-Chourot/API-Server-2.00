@@ -15,9 +15,7 @@ function Init_UI() {
         saveContentScrollPosition();
         renderCreateContactForm();
     });
-    $('#listPhotosCmd').on('click', renderPhotos);
-    $('#abort').on("click", renderPhotos);
-    $('#aboutCmd').on("click", renderAbout);
+   
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -71,14 +69,14 @@ function connectedUserAvatar() {
     let loggedUser = API.retrieveLoggedUser();
     if (loggedUser)
         return `
-        <div class="UserAvatarSmall" style="background-image:url('${loggedUser.Avatar}')" title="${loggedUser.Name}"></div>
+        <div class="UserAvatarSmall" userId="${loggedUser.Id}" id="editProfilCmd" style="background-image:url('${loggedUser.Avatar}')" title="${loggedUser.Name}"></div>
     `;
     return "";
 }
 
 function UpdateHeader(viewTitle, viewName) {
     $("#header").empty();
-    return $("#header").append(`
+    $("#header").append(`
         <span title="Liste des photos" id="listPhotosCmd"><img src="images/PhotoCloudLogo.png" class="appLogo"></span>
         <span class="viewTitle">${viewTitle} 
             <i class="cmdIcon fa fa-plus" id="addPhotoCmd" title="Ajouter une photo"></i>
@@ -103,6 +101,10 @@ function UpdateHeader(viewTitle, viewName) {
 
         </div>
     `);
+    $('#listPhotosCmd').on('click', renderPhotos);
+    $('#editProfilCmd').on('click', renderEditProfil);
+    $('#abort').on("click", renderPhotos);
+    $('#aboutCmd').on("click", renderAbout);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -125,6 +127,12 @@ async function login(credential) {
         renderPhotos();
 }
 
+async function editProfil(profil) {
+    console.log(profil);
+    await API.modifyUserProfil(profil);
+    renderPhotos();
+}
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Views rendering
 function showWaitingGif() {
@@ -139,7 +147,8 @@ function saveContentScrollPosition() {
 }
 function restoreContentScrollPosition() {
     $("#content")[0].scrollTop = contentScrollPosition;
-} function renderAbout() {
+}
+function renderAbout() {
     saveContentScrollPosition();
     eraseContent();
     UpdateHeader("À propos...", "about");
@@ -164,7 +173,6 @@ function restoreContentScrollPosition() {
         `))
 }
 async function renderPhotos() {
-    eraseContent();
     showWaitingGif();
     UpdateHeader('Liste des photos', 'photoList')
     $("#addPhoto").show();
@@ -260,13 +268,113 @@ function newContact() {
     contact.Email = "";
     return contact;
 }
+function renderEditProfil() {
+    let loggedUser = API.retrieveLoggedUser();
+    if (loggedUser) {
+        eraseContent();
+        $("#addPhoto").hide();
+        UpdateHeader("Profil", "editProfil");
+        $("#content").append(`
+            <br/>
+            <form class="form" id="editProfilForm"'>
+                <input type="hidden" name="Id" id="Id" value="${loggedUser.Id}"/>
+                <fieldset>
+                    <legend>Adresse ce courriel</legend>
+                    <input  type="email" 
+                            class="form-control Email" 
+                            name="Email" 
+                            id="Email"
+                            placeholder="Courriel" 
+                            required 
+                            RequireMessage = 'Veuillez entrer votre courriel'
+                            InvalidMessage = 'Courriel invalide'
+                            CustomErrorMessage ="Ce courriel est déjà utilisé"
+                            value="${loggedUser.Email}" >
+
+                    <input  class="form-control MatchedInput" 
+                            type="text" 
+                            matchedInputId="Email"
+                            name="matchedEmail" 
+                            id="matchedEmail" 
+                            placeholder="Vérification" 
+                            required
+                            RequireMessage = 'Veuillez entrez de nouveau votre courriel'
+                            InvalidMessage="Les courriels ne correspondent pas" 
+                            value="${loggedUser.Email}" >
+                </fieldset>
+                <fieldset>
+                    <legend>Mot de passe</legend>
+                    <input  type="password" 
+                            class="form-control" 
+                            name="Password" 
+                            id="Password"
+                            placeholder="Mot de passe" 
+                            InvalidMessage = 'Mot de passe trop court' >
+
+                    <input  class="form-control MatchedInput" 
+                            type="password" 
+                            matchedInputId="Password"
+                            name="matchedPassword" 
+                            id="matchedPassword" 
+                            placeholder="Vérification" 
+                            InvalidMessage="Ne correspond pas au mot de passe" >
+                </fieldset>
+                <fieldset>
+                    <legend>Nom</legend>
+                    <input  type="text" 
+                            class="form-control Alpha" 
+                            name="Name" 
+                            id="Name"
+                            placeholder="Nom" 
+                            required 
+                            RequireMessage = 'Veuillez entrer votre nom'
+                            InvalidMessage = 'Nom invalide'
+                            value="${loggedUser.Name}" >
+                </fieldset>
+                <fieldset>
+                    <legend>Avatar</legend>
+                    <div class='imageUploader' 
+                            newImage='false' 
+                            controlId='Avatar' 
+                            imageSrc='${loggedUser.Avatar}' 
+                            waitingImage="images/Loading_icon.gif">
+                </div>
+                </fieldset>
+
+                <input type='submit' name='submit' id='saveUser' value="Enregistrer" class="form-control btn-primary">
+                
+            </form>
+            <div class="cancel">
+                <button class="form-control btn-secondary">Annuler</button>
+            </div>
+
+            <div class="cancel">
+                <hr>
+                <a href="confirmDeleteProfil.php">
+                    <button class="form-control btn-warning">Effacer le compte</button>
+                </a>
+            </div>
+        `);
+        initFormValidation(); // important do to after all html injection!
+        initImageUploaders();
+        //addConflictValidation(testConflict, 'Email', 'saveUser' );
+        $('#editProfilForm').on("submit", function (event) {
+            let profil = getFormData($('#editProfilForm'));
+            delete profil.matchedPassword;
+            delete profil.matchedEmail;
+            event.preventDefault();
+            showWaitingGif();
+            editProfil(profil);
+        });
+    }
+}
 function renderLoginForm() {
     eraseContent();
     $("#addPhoto").hide();
     UpdateHeader("Connexion", "Login");
     $("#content").append(`
         
-        <div class="content loginForm">
+        <div class="content">
             <h3>${loginMessage}</h3>
             <form class="form" id="loginForm">
                 <input  type='email' 
@@ -295,6 +403,7 @@ function renderLoginForm() {
         </div>
     `);
     initFormValidation(); // important do to after all html injection!
+   
     $('#loginForm').on("submit", function (event) {
         let credential = getFormData($('#loginForm'));
         event.preventDefault();

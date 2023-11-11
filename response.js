@@ -68,8 +68,8 @@ export default class Response {
         this.res.writeHead(201, { 'content-type': 'application/json' });
         return this.end(JSON.stringify(jsonObj));
     }
-    updated(jsonObj) {                      // created status
-        this.res.writeHead(204, { 'content-type': 'application/json' });
+    updated(jsonObj) {                      
+        this.res.writeHead(200, { 'content-type': 'application/json' });
         return this.end(JSON.stringify(jsonObj));
     }
     content(contentType, content) {         // let the browers cache locally the receiverd content
@@ -77,7 +77,6 @@ export default class Response {
         return this.end(content);
     }
     noContent() { return this.status(204); }       // no content status
-    updated() { return this.status(204); }         // no content status
 
     /////////////////////////////////////////////// 400 ///////////////////////////////////////////////////////
 

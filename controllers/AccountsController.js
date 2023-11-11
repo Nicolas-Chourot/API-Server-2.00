@@ -121,11 +121,13 @@ export default class AccountsController extends Controller {
                 user.Created = utilities.nowInSeconds();
                 let foundedUser = this.repository.findByField("Id", user.Id);
                 if (foundedUser != null) {
+                    user.Authorizations = foundedUser.Authorizations; // user cannot change its own authorizations
                     user.VerifyCode = foundedUser.VerifyCode
                     if (user.Password == '') { // password not changed
                         user.Password = foundedUser.Password;
                     }
-                    let updatedUser = this.repository.update(user);
+                    user.Authorizations = foundedUser.Authorizations;
+                    let updatedUser = this.repository.update(user.Id, user);
                     if (this.repository.model.state.isValid) {
                         this.HttpContext.response.updated(updatedUser);
                         if (user.Email != foundedUser.Email) {

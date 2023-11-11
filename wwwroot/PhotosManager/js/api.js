@@ -89,18 +89,18 @@ class API {
         });
     }
 
-    static modifyUserInfo(userInfo) {
+    static modifyUserProfil(profil) {
         API.initHttpState();
         return new Promise(resolve => {
             $.ajax({
-                url: serverHost + "/Accounts/modify" + "/" + userInfo.Id,
+                url: serverHost + "/Accounts/modify" + "/" + profil.Id,
                 type: 'PUT',
                 contentType: 'application/json',
                 headers:  API.getBearerAuthorizationToken(),
-                data: JSON.stringify(userInfo),
-                success: (user) => {
-                    API.storeLoggedUser(User);
-                    resolve(user);
+                data: JSON.stringify(profil),
+                success: (profil) => {
+                    API.storeLoggedUser(profil);
+                    resolve(profil);
                 },
                 error: xhr => { API.setHttpErrorState(xhr); resolve(false); }
             });
