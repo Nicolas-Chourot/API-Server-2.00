@@ -237,18 +237,22 @@ async function renderPhotos() {
         renderVerify();
 }
 function renderError(message) {
+    saveContentScrollPosition();
     eraseContent();
+    UpdateHeader("Problème", "error");
+    $("#addPhotoCmd").hide();
     $("#content").append(
         $(`
             <div class="errorContainer">
-                ${message}
+                <b>${message}</b>
             </div>
             <hr>
-            <div>
-                Message du serveur : ${API.currentHttpError}
-            </div>
-            <div>
-                Status Http : ${API.currentStatus}
+            <div class="systemErrorContainer">
+                <b>Message du serveur</b> : <br>
+                ${API.currentHttpError} <br>
+
+                <b>Status Http</b> :
+                ${API.currentStatus}
             </div>
         `)
     );
@@ -262,12 +266,13 @@ function renderError(message) {
 }
 function renderVerify() {
     eraseContent();
-    $("#addPhoto").hide();
     UpdateHeader("Vérification", "verify");
+    $("#addPhotoCmd").hide();
     $("#content").append(`
         <div class="content">
-            <h3>${loginMessage}</h3>
+            
             <form class="form" id="verifyForm">
+                <b>Veuillez entrer le code de vérification de que vous avez reçu par courriel</b>
                 <input  type='text' 
                         name='Code'
                         class="form-control"
@@ -366,7 +371,7 @@ function renderCreateProfil() {
     initFormValidation(); // important do to after all html injection!
     initImageUploaders();
     $('#abortCmd').on('click', renderLoginForm);
-    //addConflictValidation(testConflict, 'Email', 'saveUser' );
+    addConflictValidation(API.checkConflictURL(), 'Email', 'saveUser');
     $('#createProfilForm').on("submit", function (event) {
         let profil = getFormData($('#createProfilForm'));
         delete profil.matchedPassword;
@@ -465,7 +470,7 @@ function renderEditProfilForm() {
         `);
         initFormValidation(); // important do to after all html injection!
         initImageUploaders();
-        //addConflictValidation(testConflict, 'Email', 'saveUser' );
+        addConflictValidation(API.checkConflictURL(), 'Email', 'saveUser');
         $('#editProfilForm').on("submit", function (event) {
             let profil = getFormData($('#editProfilForm'));
             delete profil.matchedPassword;

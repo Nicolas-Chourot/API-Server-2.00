@@ -42,7 +42,10 @@ class API {
         return serverHost + '/token';
     }
     static getBearerAuthorizationToken() {
-        return { 'Authorization': 'Bearer ' +  API.retrieveAccessToken() };
+        return { 'Authorization': 'Bearer ' + API.retrieveAccessToken() };
+    }
+    static checkConflictURL() {
+        return serverHost + "/accounts/conflict";
     }
     static logout() {
         API.initHttpState();
@@ -100,9 +103,9 @@ class API {
                 type: 'GET',
                 contentType: 'text/plain',
                 data: {},
-                success: (profil) => { 
+                success: (profil) => {
                     API.storeLoggedUser(profil);
-                    resolve(true); 
+                    resolve(true);
                 },
                 error: xhr => { API.setHttpErrorState(xhr); resolve(false); }
             });
@@ -116,7 +119,7 @@ class API {
                 url: serverHost + "/Accounts/modify" + "/" + profil.Id,
                 type: 'PUT',
                 contentType: 'application/json',
-                headers:  API.getBearerAuthorizationToken(),
+                headers: API.getBearerAuthorizationToken(),
                 data: JSON.stringify(profil),
                 success: (profil) => {
                     API.storeLoggedUser(profil);
@@ -134,7 +137,7 @@ class API {
                 contentType: 'application/json',
                 type: 'GET',
                 data: {},
-                headers:  API.getBearerAuthorizationToken(),
+                headers: API.getBearerAuthorizationToken(),
                 success: () => {
                     API.deConnect();
                     resolve(true);
@@ -161,7 +164,7 @@ class API {
             $.ajax({
                 url: serverHost + service + "/" + id,
                 type: 'GET',
-                headers:  API.getBearerAuthorizationToken(),
+                headers: API.getBearerAuthorizationToken(),
                 success: data => { resolve(data); },
                 error: xhr => { API.setHttpErrorState(xhr); resolve(false); }
             });
@@ -172,7 +175,7 @@ class API {
         return new Promise(resolve => {
             $.ajax({
                 url: url,
-                headers:  API.getBearerAuthorizationToken(),
+                headers: API.getBearerAuthorizationToken(),
                 type: 'GET',
                 success: (data, status, xhr) => {
                     resolve({ data, ETage: xhr.getResponseHeader("ETag") });
@@ -187,7 +190,7 @@ class API {
             $.ajax({
                 url: serverHost + service,
                 type: 'POST',
-                headers:  API.getBearerAuthorizationToken(),
+                headers: API.getBearerAuthorizationToken(),
                 contentType: 'application/json',
                 data: JSON.stringify(data),
                 success: data => { resolve(data) },
@@ -201,7 +204,7 @@ class API {
             $.ajax({
                 url: serverHost + service + "/" + data.Id,
                 type: 'PUT',
-                headers:  API.getBearerAuthorizationToken(),
+                headers: API.getBearerAuthorizationToken(),
                 contentType: 'application/json',
                 data: JSON.stringify(data),
                 success: () => { resolve(true) },
@@ -215,7 +218,7 @@ class API {
             $.ajax({
                 url: serverHost + service + "/" + id,
                 type: 'DELETE',
-                headers:  API.getBearerAuthorizationToken(),
+                headers: API.getBearerAuthorizationToken(),
                 success: () => { resolve(true) },
                 error: xhr => { API.setHttpErrorState(xhr); resolve(false); }
             });

@@ -91,13 +91,25 @@ export default class AccountsController extends Controller {
                         this.HttpContext.response.unprocessable();
                     }
                 } else {
-                    this.HttpContext.response.unverifiedUser();
+                    this.HttpContext.response.unverifiedUser("Verification code does not matched.");
                 }
             } else {
                 this.HttpContext.response.unprocessable();
             }
         } else
             this.HttpContext.response.notImplemented();
+    }
+    conflict() { 
+        if (this.repository != null) {
+            let id = this.HttpContext.path.params.Id;
+            if (id == undefined) id =0;
+            let email = this.HttpContext.path.params.Email;
+            if (id && email) {
+                let prototype = {Id: id, Email: email};
+                this.HttpContext.response.updated(this.repository.checkConflict(prototype));
+            }
+        } else
+            this.HttpContext.response.updated(false);
     }
 
     // POST: account/register body payload[{"Id": 0, "Name": "...", "Email": "...", "Password": "..."}]

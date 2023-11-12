@@ -157,6 +157,14 @@
     padding: 20px;
 }
 
+.systemErrorContainer {
+    font-size: 1.1rem;
+    width: 100%;
+    margin: auto;
+    color: blue;
+    padding: 20px;
+}
+
 .UserdeleteForm {
     margin: 20px;
 }
