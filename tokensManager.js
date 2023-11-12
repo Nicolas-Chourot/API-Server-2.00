@@ -40,9 +40,9 @@ export default
         let index = 0;
         let indexToDelete = [];
         for (let token of tokens) {
-            if (token.UserId == userId) {
+            if (token.User.Id == userId) {
                 indexToDelete.push(index);
-                console.log("User " + token.User.Username + " logged out");
+                console.log("User " + token.User.Name + " logged out");
             }
             index++;
         }

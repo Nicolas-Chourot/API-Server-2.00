@@ -32,6 +32,9 @@ class API {
     static retrieveLoggedUser() {
         return JSON.parse(sessionStorage.getItem('user'));
     }
+    static eraseLoggedUser() {
+        sessionStorage.removeItem('user');
+    }
     static registerRequestURL() {
         return serverHost + '/Accounts/register';
     }
@@ -41,9 +44,23 @@ class API {
     static getBearerAuthorizationToken() {
         return { 'Authorization': 'Bearer ' +  API.retrieveAccessToken() };
     }
-    static deConnect() {
-        sessionStorage.removeItem('user');
-        eraseAccessToken();
+    static logout() {
+        API.initHttpState();
+        return new Promise(resolve => {
+            let loggedUser = API.retrieveLoggedUser();
+            $.ajax({
+                url: serverHost + "/accounts/logout?userId=" + loggedUser.Id,
+                contentType: 'text/plain',
+                type: 'GET',
+                data: {},
+                success: async () => {
+                    API.eraseLoggedUser();
+                    API.eraseAccessToken();
+                    resolve(true);
+                },
+                error: xhr => { API.setHttpErrorState(xhr); resolve(false); }
+            });
+        });
     }
     static register(profil) {
         API.initHttpState();
@@ -104,22 +121,6 @@ class API {
                 success: (profil) => {
                     API.storeLoggedUser(profil);
                     resolve(profil);
-                },
-                error: xhr => { API.setHttpErrorState(xhr); resolve(false); }
-            });
-        });
-    }
-    static logout(userId) {
-        API.initHttpState();
-        return new Promise(resolve => {
-            $.ajax({
-                url: serverHost + "/accounts/logout/" + userId,
-                type: 'GET',
-                data: {},
-                headers:  API.getBearerAuthorizationToken(),
-                success: () => {
-                    API.deConnect();
-                    resolve(true);
                 },
                 error: xhr => { API.setHttpErrorState(xhr); resolve(false); }
             });
