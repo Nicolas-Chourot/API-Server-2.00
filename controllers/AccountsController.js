@@ -102,7 +102,6 @@ export default class AccountsController extends Controller {
     conflict() { 
         if (this.repository != null) {
             let id = this.HttpContext.path.params.Id;
-            if (id == undefined) id =0;
             let email = this.HttpContext.path.params.Email;
             if (id && email) {
                 let prototype = {Id: id, Email: email};
