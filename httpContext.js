@@ -23,6 +23,7 @@ export default class HttpContext {
         this.secure = req.headers['x-forwarded-proto'] != undefined;
         this.host = (this.secure ? "https://" : "http://") + req.headers["host"];
         this.hostIp = req.headers['x-forwarded-for'] != undefined ? req.headers['x-forwarded-for'] : "127.0.0.1";
+        this.cacheable = this.path.isAPI && this.req.method == "GET" && this.path.id == undefined;
     }
     static get() { 
         return httpContext; 

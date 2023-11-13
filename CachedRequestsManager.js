@@ -53,7 +53,7 @@ export default class CachedRequestsManager {
         return true;
     }
     static get(HttpContext) {
-        if (HttpContext.req.method == 'GET') {
+        if (HttpContext.cacheable) {
             let cacheFound = CachedRequestsManager.find(HttpContext.req.url);
             if (cacheFound) {
                 if (CachedRequestsManager.readAuthorization(HttpContext, cacheFound.authorization)) {

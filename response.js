@@ -38,9 +38,7 @@ export default class Response {
         this.end();
     }
     AddInCache(jsonObj, ETag, readAuthorization) {
-        if (this.HttpContext.req.method == 'GET' &&
-            this.HttpContext.path.isAPI &&
-            this.HttpContext.path.id == undefined)
+        if (this.HttpContext.cacheable)
             CachedRequests.add(this.HttpContext.req.url, jsonObj, ETag, readAuthorization);
     }
     JSON(jsonObj, ETag = "", fromCache = false, readAuthorization = false) {
