@@ -10,7 +10,7 @@ let passwordError = "";
 Init_UI();
 
 function Init_UI() {
-    renderLoginForm();
+    renderPhotos();
 }
 
 function attachCmd() {
@@ -83,7 +83,7 @@ function UpdateHeader(viewTitle, viewName) {
     $("#header").append(`
         <span title="Liste des photos" id="listPhotosCmd"><img src="images/PhotoCloudLogo.png" class="appLogo"></span>
         <span class="viewTitle">${viewTitle} 
-            <i class="cmdIcon fa fa-plus" id="addPhotoCmd" title="Ajouter une photo"></i>
+            <div class="cmdIcon fa fa-plus" id="newPhotoCmd" title="Ajouter une photo"></div>
         </span>
 
         <div class="headerMenusContainer">
@@ -167,6 +167,28 @@ async function createProfil(profil) {
         renderError("Un problème est survenu.");
     }
 }
+async function newPhoto(photo) {
+    let loggedUser = API.retrieveLoggedUser();
+    photo.OwnerId = loggedUser.Id;
+    photo.Date = Date.now();
+    if (await API.POST(photo))
+        renderPhotos();
+    else
+        renderError("Un problème est survenu.");
+}
+async function editPhoto(photo) {
+    photo.Date = Date.now();
+    if (await API.PUT(photo))
+        renderPhotos();
+    else
+        renderError("Un problème est survenu.");
+}
+async function deletePhoto(photoId) {
+    if (await API.DELETE(photoId))
+        renderPhotos();
+    else
+        renderError("Un problème est survenu.");
+}
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Views rendering
 function showWaitingGif() {
@@ -186,7 +208,7 @@ function renderAbout() {
     saveContentScrollPosition();
     eraseContent();
     UpdateHeader("À propos...", "about");
-    $("#addPhotoCmd").hide();
+    $("#newPhotoCmd").hide();
     $("#createContact").hide();
     $("#abort").show();
     $("#content").append(
@@ -208,39 +230,258 @@ function renderAbout() {
         `))
 }
 async function renderPhotos() {
-    if (isVerified()) {
-        showWaitingGif();
-        UpdateHeader('Liste des photos', 'photoList')
-        $("#addPhoto").show();
-        $("#abort").hide();
-        /*let contacts = await API_GetContacts();
-        
-        if (contacts !== null) {
-            contacts.forEach(contact => {
-                $("#content").append(renderContact(contact));
-            });
-            restoreContentScrollPosition();
-            // Attached click events on command icons
-            $(".editCmd").on("click", function () {
-                saveContentScrollPosition();
-                renderEditContactForm($(this).attr("editContactId"));
-            });
-            $(".deleteCmd").on("click", function () {
-                saveContentScrollPosition();
-                renderDeleteContactForm($(this).attr("deleteContactId"));
-            });
-            $(".contactRow").on("click", function (e) { e.preventDefault(); })
-        } else {
-            renderError("Service introuvable");
-        }*/
+    let loggedUser = API.retrieveLoggedUser();
+    if (loggedUser) {
+        if (isVerified()) {
+            showWaitingGif();
+            UpdateHeader('Liste des photos', 'photoList')
+            $("#newPhotoCmd").show();
+            $("#abort").hide();
+            let photos = await API.GET_ALL("?sort=date,desc");
+            if (!photos) {
+                renderError();
+            } else {
+                $("#content").empty();
+                let photosLayout = $("<div class='photosLayout'>");
+                $("#content").append(photosLayout);
+                if (photos.data.length > 0) {
+                    let sharedIndicator = "";
+                    let editCmd = "";
+                    let loggedUser = API.retrieveLoggedUser();
+                    photos.data.forEach(photo => {
+                        if (photo.OwnerId == loggedUser.Id) {
+                            sharedIndicator = `
+                        <div class="UserAvatarSmall transparentBackground" style="background-image:url('images/shared.png')" title="partagée">
+                        </div>
+                    `;
+                            editCmd = `
+                        <span photoId="${photo.Id}" class="editCmd cmdIconSmall fa fa-pencil" title="Editer ${photo.Title}"> </span>
+                        <span photoId="${photo.Id}" class="deleteCmd cmdIconSmall fa fa-trash" title="Effacer ${photo.Title}"> </span>
+                    `;
+                        }
+                        photosLayout.append(renderPhoto(photo, editCmd, sharedIndicator));
+                    });
+                    restoreContentScrollPosition();
+
+                } else {
+                    $('#content').append($(`<h4 class="form">aucune photo</h4>`));
+                }
+                $("#newPhotoCmd").on("click", function () {
+                    saveContentScrollPosition();
+                    renderNewPhotoForm();
+                });
+                // Attached click events on command icons
+                $(".editCmd").on("click", function () {
+                    saveContentScrollPosition();
+                    renderEditPhotoForm($(this).attr("photoId"));
+                });
+                $(".deleteCmd").on("click", function () {
+                    saveContentScrollPosition();
+                    renderDeletePhotoForm($(this).attr("photoId"));
+                });
+                $(".detailsCmd").on("click", function () {
+                    saveContentScrollPosition();
+                    renderPhotoDetails($(this).attr("photoId"));
+                });
+                $(".contactRow").on("click", function (e) { e.preventDefault(); })
+            }
+        } else
+            renderVerify();
     } else
-        renderVerify();
+        renderLoginForm();
+}
+function renderPhoto(photo, editCmd = "", sharedIndicator = "") {
+    let html = ` <div class="photoLayout" photo_id="${photo.Id}">
+                    <div class="photoTitleContainer" title="${photo.Description}">
+                        <div class="photoTitle ellipsis">${photo.Title}</div> 
+                        ${editCmd}
+                    </div>
+                    <div photoId="${photo.Id}" class="detailsCmd photoImage" style="background-image:url('${photo.Image}')">
+                        <div class="UserAvatarSmall transparentBackground" style="background-image:url('${photo.Owner.Avatar}')" title="${photo.Owner.Name}"></div>
+                        ${sharedIndicator}
+                    </div>
+                    ${convertToFrenchDate(photo.Date)}
+                </div>`;
+    return html;
+}
+async function renderPhotoDetails(photoId) {
+    let photo = await API.GET_ID(photoId);
+    if (photo) {
+        eraseContent();
+        UpdateHeader("Inscription", "createProfil");
+        $("#newPhotoCmd").hide();
+        $("#content").append(` 
+            <div class="content">
+                <div class="photoDetailsOwner">
+                <div class="UserAvatarSmall" style="background-image:url('${photo.Owner.Avatar}')" title="${photo.Owner.Name}"></div>
+                    ${photo.Owner.Name}
+                </div>
+                <hr>
+                <div class="photoDetailsTitle">${photo.Title}</div>
+                <img src="${photo.Image}" class="photoDetailsLargeImage">
+                <div class="photoDetailsCreationDate">
+                ${convertToFrenchDate(photo.Date)}
+                </div>
+            <div class="photoDetailsDescription">${photo.Description}</div>`
+        );
+    }
+}
+async function renderNewPhotoForm() {
+    eraseContent();
+    UpdateHeader("Inscription", "createProfil");
+    $("#newPhotoCmd").hide();
+    $("#content").append(` 
+        <form class="form" id="newPhotoForm">
+            <fieldset>
+                <legend>Informations</legend>
+                <input  type="text" 
+                        class="form-control Alpha" 
+                        name="Title" 
+                        id="Title"
+                        placeholder="Titre" 
+                        required 
+                        RequireMessage = 'Veuillez entrer un titre'
+                        InvalidMessage = 'Le titre contient des caractères spéciaux' />
+
+                <textarea class="form-control Alpha" 
+                          name="Description" 
+                          id="Description"
+                          placeholder="Description" 
+                          rows="4"
+                          required 
+                          RequireMessage = 'Veuillez entrer une Description'></textarea>
+            
+                <input  type="checkbox" 
+                        class="" 
+                        name="Shared" 
+                        id="Shared"  />  
+                <label for="Shared">Partagée</label>
+            </fieldset>
+            <fieldset>
+                <legend>Image</legend>
+                <div class='imageUploader' 
+                     newImage='true' 
+                     controlId='Image' 
+                     imageSrc='images/PhotoCloudLogo.png' 
+                     required 
+                     RequireMessage = 'Veuillez entrer une image'
+                     waitingImage="images/Loading_icon.gif">
+            </div>
+            </fieldset>
+            <input type='submit' name='submit' value="Enregistrer" class="form-control btn-primary">
+        </form>
+        <div class="cancel">
+            <button id="abortCmd" class="form-control btn-secondary">Annuler</button>
+        </div>
+    `);
+    initFormValidation();
+    initImageUploaders();
+    $('#abortCmd').on('click', renderPhotos);
+    $('#newPhotoForm').on("submit", function (event) {
+        let photo = getFormData($('#newPhotoForm'));
+        photo.Shared = $("#Shared").prop("checked");
+        event.preventDefault();
+        showWaitingGif();
+        newPhoto(photo);
+    });
+}
+async function renderEditPhotoForm(photoId) {
+    let photo = await API.GET_ID(photoId);
+    if (photo) {
+        eraseContent();
+        UpdateHeader("Mofication", "editPhoto");
+        $("#newPhotoCmd").hide();
+        $("#content").append(` 
+        <form class="form" id="editPhotoForm">
+            <input type="hidden" name = "Id" value="${photo.Id}">
+            <input type="hidden" name = "OwnerId" value="${photo.OwnerId}">
+            <fieldset>
+                <legend>Informations</legend>
+                <input  type="text" 
+                        class="form-control Alpha" 
+                        name="Title" 
+                        id="Title"
+                        placeholder="Titre" 
+                        required 
+                        RequireMessage = 'Veuillez entrer un titre'
+                        InvalidMessage = 'Le titre contient des caractères spéciaux' 
+                        value="${photo.Title}"/>
+
+                <textarea class="form-control Alpha" 
+                          name="Description" 
+                          id="Description"
+                          placeholder="Description" 
+                          rows="4"
+                          required 
+                          RequireMessage = 'Veuillez entrer une Description'>${photo.Description}</textarea>
+            
+                <input  type="checkbox" 
+                        name="Shared" 
+                        id="Shared"  
+                        ${photo.Shared ? "checked" : ""}
+                        />  
+                <label for="Shared">Partagée</label>
+            </fieldset>
+            <fieldset>
+                <legend>Image</legend>
+                <div class='imageUploader' 
+                     newImage='false' 
+                     controlId='Image' 
+                     imageSrc='${photo.Image}' 
+                     required 
+                     RequireMessage = 'Veuillez entrer une image'
+                     waitingImage="images/Loading_icon.gif">
+            </div>
+            </fieldset>
+            <input type='submit' name='submit' value="Enregistrer" class="form-control btn-primary">
+        </form>
+        <div class="cancel">
+            <button id="abortCmd" class="form-control btn-secondary">Annuler</button>
+        </div>
+    `);
+        initFormValidation();
+        initImageUploaders();
+        $('#abortCmd').on('click', renderPhotos);
+        $('#editPhotoForm').on("submit", function (event) {
+            let photo = getFormData($('#editPhotoForm'));
+            photo.Shared = $("#Shared").prop("checked");
+            event.preventDefault();
+            showWaitingGif();
+            editPhoto(photo);
+        });
+    } else
+        renderError("Un problème est survenu.")
+}
+async function renderDeletePhotoForm(photoId) {
+    let photo = await API.GET_ID(photoId);
+    if (photo) {
+        eraseContent();
+        UpdateHeader("Mofication", "editPhoto");
+        $("#newPhotoCmd").hide();
+        $("#content").append(`
+            <br>
+            <div class="confirmForm">
+                <h4> Voulez-vous vraiment effacer cette photo? </h4>
+                <br>
+                <div class="photoLayout">
+                    <div class="photoTitle" title="${photo.Description}">${photo.Title}</div>
+                    <div class="photoImage" style="background-image:url('${photo.Image}')"> </div>
+                </div>       
+                <br>
+                <button photoId=${photo.Id} class="deletePhotoCmd form-control btn-danger">Effacer la photo</button>
+                <br>
+                <button id="abortCmd" class="form-control btn-secondary">Annuler</button>
+            </div>
+        `);
+        $(".deletePhotoCmd").on("click", function () { deletePhoto($(this).attr("photoId")); })
+        $("#abortCmd").on("click", renderPhotos);
+    }
 }
 function renderError(message) {
     saveContentScrollPosition();
     eraseContent();
     UpdateHeader("Problème", "error");
-    $("#addPhotoCmd").hide();
+    $("#newPhotoCmd").hide();
     $("#content").append(
         $(`
             <div class="errorContainer">
@@ -267,7 +508,7 @@ function renderError(message) {
 function renderVerify() {
     eraseContent();
     UpdateHeader("Vérification", "verify");
-    $("#addPhotoCmd").hide();
+    $("#newPhotoCmd").hide();
     $("#content").append(`
         <div class="content">
             
@@ -295,7 +536,7 @@ function renderVerify() {
 function renderCreateProfil() {
     eraseContent();
     UpdateHeader("Inscription", "createProfil");
-    $("#addPhotoCmd").hide();
+    $("#newPhotoCmd").hide();
     $("#content").append(`
         <br/>
         <form class="form" id="createProfilForm"'>
@@ -386,7 +627,7 @@ function renderEditProfilForm() {
     if (loggedUser) {
         eraseContent();
         UpdateHeader("Profil", "editProfil");
-        $("#addPhotoCmd").hide();
+        $("#newPhotoCmd").hide();
         $("#content").append(`
             <br/>
             <form class="form" id="editProfilForm"'>
@@ -458,7 +699,7 @@ function renderEditProfilForm() {
                 
             </form>
             <div class="cancel">
-                <button class="form-control btn-secondary" id="listPhotosCmd">Annuler</button>
+                <button class="form-control btn-secondary" id="abortCmd">Annuler</button>
             </div>
 
             <div class="cancel">
@@ -471,6 +712,7 @@ function renderEditProfilForm() {
         initFormValidation(); // important do to after all html injection!
         initImageUploaders();
         addConflictValidation(API.checkConflictURL(), 'Email', 'saveUser');
+        $('#abortCmd').on('click', renderPhotos);
         $('#editProfilForm').on("submit", function (event) {
             let profil = getFormData($('#editProfilForm'));
             delete profil.matchedPassword;
@@ -484,7 +726,7 @@ function renderEditProfilForm() {
 function renderLoginForm() {
     eraseContent();
     UpdateHeader("Connexion", "Login");
-    $("#addPhotoCmd").hide();
+    $("#newPhotoCmd").hide();
     $("#content").append(`
         <div class="content">
             <h3>${loginMessage}</h3>

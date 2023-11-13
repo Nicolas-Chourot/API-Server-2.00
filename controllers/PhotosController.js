@@ -4,7 +4,7 @@ import PhotoModel from '../models/photo.js';
 import Controller from './Controller.js';
 
 export default
-    class WordsController extends Controller {
+    class Photos extends Controller {
         constructor(HttpContext) {
             super(HttpContext, new Repository(new PhotoModel()), Authorizations.user());
         }
