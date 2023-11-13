@@ -111,12 +111,11 @@ class API {
             });
         });
     }
-
     static modifyUserProfil(profil) {
         API.initHttpState();
         return new Promise(resolve => {
             $.ajax({
-                url: serverHost + "/Accounts/modify" + "/" + profil.Id,
+                url: serverHost + "/Accounts/modify/" + profil.Id,
                 type: 'PUT',
                 contentType: 'application/json',
                 headers: API.getBearerAuthorizationToken(),

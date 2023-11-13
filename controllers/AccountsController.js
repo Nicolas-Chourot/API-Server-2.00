@@ -99,14 +99,16 @@ export default class AccountsController extends Controller {
         } else
             this.HttpContext.response.notImplemented();
     }
-    conflict() { 
+    //GET : /accounts/conflict?Id=...&Email=.....
+    conflict() {
         if (this.repository != null) {
             let id = this.HttpContext.path.params.Id;
             let email = this.HttpContext.path.params.Email;
             if (id && email) {
-                let prototype = {Id: id, Email: email};
+                let prototype = { Id: id, Email: email };
                 this.HttpContext.response.updated(this.repository.checkConflict(prototype));
-            }
+            } else
+                this.HttpContext.response.updated(false);
         } else
             this.HttpContext.response.updated(false);
     }
@@ -151,7 +153,7 @@ export default class AccountsController extends Controller {
                     let updatedUser = this.repository.update(user.Id, user);
                     if (this.repository.model.state.isValid) {
                         this.HttpContext.response.updated(updatedUser);
-                       
+
                         // users have a link to imagesRepository
                         // let imagesRepository = new ImagesRepository();
                         // imagesRepository.newETag();

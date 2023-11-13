@@ -50,12 +50,12 @@ export default class CachedRequestsManager {
     static readAuthorization(HttpContext, readAuthorization) {
         if (readAuthorization)
             return TokenManager.requestAuthorized(HttpContext, Authorizations);
-        return true
+        return true;
     }
     static get(HttpContext) {
         if (HttpContext.req.method == 'GET') {
             let cacheFound = CachedRequestsManager.find(HttpContext.req.url);
-            if (cacheFound != null) {
+            if (cacheFound) {
                 if (CachedRequestsManager.readAuthorization(HttpContext, cacheFound.authorization)) {
                     HttpContext.response.JSON(cacheFound.content, cacheFound.ETag, true);
                     return true;

@@ -26,11 +26,10 @@ export default class Gmail {
     send(to, subject, html) {
         let from = GmailAccountEmail;
         this.transporter.sendMail({ from, to, subject, html }, function (error, info) {
-            if (error) {
+            if (error)
                 console.log(error);
-            } else {
+            else
                 console.log('Email sent: ' + info.response);
-            }
         })
     }
 }
