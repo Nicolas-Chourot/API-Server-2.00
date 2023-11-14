@@ -294,10 +294,11 @@ async function renderPhotosList() {
                 let photoOwner = photo.OwnerId == loggedUser.Id;
                 if ((sortType != "owner") || (sortType == "owner" && photoOwner)) {
                     if (photoOwner) {
-                        sharedIndicator = `
-                        <div class="UserAvatarSmall transparentBackground" style="background-image:url('images/shared.png')" title="partagée">
-                        </div>
-                    `;
+                        if (photo.Shared)
+                            sharedIndicator = `
+                                <div class="UserAvatarSmall transparentBackground" style="background-image:url('images/shared.png')" title="partagée">
+                                </div>
+                            `;
                         editCmd = `
                         <span photoId="${photo.Id}" class="editCmd cmdIconSmall fa fa-pencil" title="Editer ${photo.Title}"> </span>
                         <span photoId="${photo.Id}" class="deleteCmd cmdIconSmall fa fa-trash" title="Effacer ${photo.Title}"> </span>
