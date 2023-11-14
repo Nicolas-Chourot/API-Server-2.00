@@ -152,7 +152,7 @@ class API {
                 url: serverHost + service,
                 type: 'HEAD',
                 contentType: 'text/plain',
-                complete: () => { resolve(request.getResponseHeader('ETag')) },
+                complete: (request) => { resolve(request.getResponseHeader('ETag')) },
                 error: xhr => { API.setHttpErrorState(xhr); resolve(false); }
             });
         });
@@ -177,7 +177,8 @@ class API {
                 headers: API.getBearerAuthorizationToken(),
                 type: 'GET',
                 success: (data, status, xhr) => {
-                    resolve({ data, ETage: xhr.getResponseHeader("ETag") });
+                    let ETag = xhr.getResponseHeader("ETag");
+                    resolve({ data, ETag });
                 },
                 error: xhr => { API.setHttpErrorState(xhr); resolve(false); }
             });
