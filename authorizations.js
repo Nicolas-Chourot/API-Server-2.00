@@ -34,4 +34,36 @@ export default class Authorizations {
         }
         return true;
     }
+    static readGranted(HttpContext, authorizations) {
+        if (authorizations) {
+            if (authorizations.readAccess == 0) return true;
+            // Extract bearer token from head of the http request
+            if (HttpContext.req.headers["authorization"] != undefined) {
+                let token = HttpContext.req.headers["authorization"].replace('Bearer ', '');
+                token = TokenManager.find(token, false/* do not renew token */);
+                if (token)
+                    return (token.User.Authorizations.readAccess >= authorizations.readAccess);
+                else
+                    return false;
+            } else
+                return false;
+        }
+        return true;
+    }
+    static writeGranted(HttpContext, authorizations) {
+        if (authorizations) {
+            if (authorizations.readAccess == 0) return true;
+            // Extract bearer token from head of the http request
+            if (HttpContext.req.headers["authorization"] != undefined) {
+                let token = HttpContext.req.headers["authorization"].replace('Bearer ', '');
+                token = TokenManager.find(token);
+                if (token)
+                    return (token.User.Authorizations.writeAccess >= authorizations.writeAccess);
+                else
+                    return false;
+            } else
+                return false;
+        }
+        return true;
+    }
 }

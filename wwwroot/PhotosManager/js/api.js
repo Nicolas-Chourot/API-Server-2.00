@@ -14,6 +14,8 @@ class API {
     static setHttpErrorState(xhr) {
         if (xhr.responseJSON)
             this.currentHttpError = xhr.responseJSON.error_description;
+        else
+            this.currentHttpError = xhr.statusText;
         this.currentStatus = xhr.status;
         this.error = true;
     }
@@ -30,7 +32,10 @@ class API {
         sessionStorage.setItem('user', JSON.stringify(user));
     }
     static retrieveLoggedUser() {
-        return JSON.parse(sessionStorage.getItem('user'));
+        let user = JSON.parse(sessionStorage.getItem('user'));
+        if (user)
+            user.isAdmin = user.Authorizations.readAccess == 2 && user.Authorizations.writeAccess == 2;
+        return user;
     }
     static eraseLoggedUser() {
         sessionStorage.removeItem('user');
@@ -151,6 +156,7 @@ class API {
             $.ajax({
                 url: serverHost + service,
                 type: 'HEAD',
+                headers: API.getBearerAuthorizationToken(),
                 contentType: 'text/plain',
                 complete: (request) => { resolve(request.getResponseHeader('ETag')) },
                 error: xhr => { API.setHttpErrorState(xhr); resolve(false); }

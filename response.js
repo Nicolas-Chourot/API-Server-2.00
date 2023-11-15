@@ -13,7 +13,7 @@ export default class Response {
     }
     status(number, errorMessage = '') {
         if (errorMessage) {
-            this.res.writeHead(number, { 'content-type': 'application/json' });
+            this.res.writeHead(number, { 'content-type': 'application/json', 'responseText': errorMessage });
             this.errorContent = { "error_description": errorMessage };
             return this.end(JSON.stringify(this.errorContent));
         } else {

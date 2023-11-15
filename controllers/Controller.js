@@ -8,13 +8,16 @@ export default class Controller {
     }
 
     head() {
-        if (this.repository != null) {
-            this.HttpContext.response.ETag(this.repository.ETag);
+        if (Authorizations.readGranted(this.HttpContext, this.authorizations)) {
+            if (this.repository != null) {
+                this.HttpContext.response.ETag(this.repository.ETag);
+            } else
+                this.HttpContext.response.notImplemented();
         } else
-            this.HttpContext.response.notImplemented();
+            this.HttpContext.response.unAuthorized("Unauthorized access");
     }
     get(id) {
-        if (Authorizations.granted(this.HttpContext, this.authorizations)) {
+        if (Authorizations.readGranted(this.HttpContext, this.authorizations)) {
             if (this.repository != null) {
                 if (id !== undefined) {
                     let data = this.repository.get(id);
@@ -27,10 +30,10 @@ export default class Controller {
             } else
                 this.HttpContext.response.notImplemented();
         } else
-            this.HttpContext.response.unAuthorized();
+            this.HttpContext.response.unAuthorized("Unauthorized access");
     }
     post(data) {
-        if (Authorizations.granted(this.HttpContext, this.authorizations)) {
+        if (Authorizations.writeGranted(this.HttpContext, this.authorizations)) {
             if (this.repository != null) {
                 data = this.repository.add(data);
                 if (this.repository.model.state.isValid) {
@@ -47,7 +50,7 @@ export default class Controller {
             this.HttpContext.response.unAuthorized();
     }
     put(data) {
-        if (Authorizations.granted(this.HttpContext, this.authorizations)) {
+        if (Authorizations.writeGranted(this.HttpContext, this.authorizations)) {
             if (this.repository != null) {
                 if (this.HttpContext.path.id) {
                     let updatedData = this.repository.update(this.HttpContext.path.id, data);
@@ -68,10 +71,10 @@ export default class Controller {
             } else
                 this.HttpContext.response.notImplemented();
         } else
-            this.HttpContext.response.unAuthorized();
+            this.HttpContext.response.unAuthorized("Unauthorized access");
     }
     remove(id) {
-        if (Authorizations.granted(this.HttpContext, this.authorizations)) {
+        if (Authorizations.writeGranted(this.HttpContext, this.authorizations)) {
             if (this.repository != null) {
                 if (this.HttpContext.path.id) {
                     if (this.repository.remove(id))
@@ -83,6 +86,6 @@ export default class Controller {
             } else
                 this.HttpContext.response.notImplemented();
         } else
-            this.HttpContext.response.unAuthorized();
+            this.HttpContext.response.unAuthorized("Unauthorized access");
     }
 }

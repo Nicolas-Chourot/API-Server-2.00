@@ -245,6 +245,6 @@ legend {
     grid-template-columns: 25px auto !important;
 }
 
-div2,a2,i2, span2 {
+div2{
     border: 1px solid red;
 }

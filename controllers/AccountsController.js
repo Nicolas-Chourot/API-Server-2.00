@@ -15,13 +15,13 @@ export default class AccountsController extends Controller {
             if (Authorizations.granted(this.HttpContext, Authorizations.admin()))
                 this.HttpContext.response.JSON(this.repository.get(id));
             else
-                this.HttpContext.response.unAuthorized();
+                this.HttpContext.response.unAuthorized("Unauthorized access");
         }
         else {
             if (Authorizations.granted(this.HttpContext, Authorizations.admin()))
                 this.HttpContext.response.JSON(this.repository.getAll(this.HttpContext.path.params), this.repository.ETag, true, Authorizations.admin());
             else
-                this.HttpContext.response.unAuthorized();
+                this.HttpContext.response.unAuthorized("Unauthorized access");
         }
     }
     // POST: /token body payload[{"Email": "...", "Password": "..."}]

@@ -10,9 +10,9 @@ global.requestCacheExpirationTime = serverVariables.get("main.requestCache.expir
 global.CachedRequests = [];
 
 export default class CachedRequestsManager {
-    static add(url, content, ETag = "", authorization = null) {
+    static add(url, content, ETag = "", authorizations = null) {
         if (url != "") {
-            CachedRequests.push({ url, content, ETag, authorization, Expire_Time: utilities.nowInSeconds() + requestCacheExpirationTime });
+            CachedRequests.push({ url, content, ETag, authorizations, Expire_Time: utilities.nowInSeconds() + requestCacheExpirationTime });
             log(BgCyan, FgWhite, "Response content of request Get: ", url, " added in requests cache");
         }
     }
@@ -24,9 +24,7 @@ export default class CachedRequestsManager {
                         // renew cached url
                         endpoint.Expire_Time = utilities.nowInSeconds() + requestCacheExpirationTime;
                         log(BgGreen, FgWhite, "Response content of request Get: ", url, " retreived from requests cache");
-                        let content = endpoint.content;
-                        let ETag = endpoint.ETag;
-                        return { ETag, content };
+                        return endpoint;
                     }
                 }
             }
@@ -47,16 +45,16 @@ export default class CachedRequestsManager {
         }
         CachedRequests = CachedRequests.filter(endpoint => endpoint.Expire_Time > now);
     }
-    static readAuthorization(HttpContext, readAuthorization) {
-        if (readAuthorization)
-            return TokenManager.requestAuthorized(HttpContext, Authorizations);
+    static readAuthorization(HttpContext, authorizations) {
+        if (authorizations)
+            return Authorizations.readGranted(HttpContext, authorizations);
         return true;
     }
     static get(HttpContext) {
         if (HttpContext.cacheable) {
             let cacheFound = CachedRequestsManager.find(HttpContext.req.url);
             if (cacheFound) {
-                if (CachedRequestsManager.readAuthorization(HttpContext, cacheFound.authorization)) {
+                if (CachedRequestsManager.readAuthorization(HttpContext, cacheFound.authorizations)) {
                     HttpContext.response.JSON(cacheFound.content, cacheFound.ETag, true);
                     return true;
                 }

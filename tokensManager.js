@@ -56,19 +56,21 @@ export default
         for (let token of tokens) {
             if (token.Expire_Time < now) {
                 indexToDelete.push(index);
-                console.log("Access token of user " + token.User.Username + " expired");
+                console.log("Access token of user " + token.User.Name + " expired");
             }
             index++;
         }
         if (index > 0)
             tokensRepository.removeByIndex(indexToDelete);
     }
-    static find(access_token) {
+    static find(access_token, renew = true) {
         let token = tokensRepository.findByField('Access_token', access_token);
         if (token != null) {
-            // renew expiration date
-            token.Expire_Time = utilities.nowInSeconds() + tokenLifeDuration;
-            tokensRepository.update(token.Id, token);
+            if (renew) {
+                // renew expiration date
+                token.Expire_Time = utilities.nowInSeconds() + tokenLifeDuration;
+                tokensRepository.update(token.Id, token);
+            }
             return token;
         }
         return null;

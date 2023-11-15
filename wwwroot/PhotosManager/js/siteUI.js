@@ -17,8 +17,10 @@ function Init_UI() {
 }
 
 function attachCmd() {
+    $('#loginCmd').on('click', renderLoginForm);
     $('#logoutCmd').on('click', logout);
     $('#listPhotosCmd').on('click', renderPhotos);
+    $('#listPhotosMenuCmd').on('click', renderPhotos);
     $('#editProfilMenuCmd').on('click', renderEditProfilForm);
     $('#editProfilCmd').on('click', renderEditProfilForm);
 
@@ -28,7 +30,6 @@ function attachCmd() {
 
     $('#aboutCmd').on("click", renderAbout);
 }
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Header management
 function loggedUserMenu() {
@@ -41,7 +42,7 @@ function loggedUserMenu() {
             <span class="dropdown-item" id="editProfilMenuCmd">
                 <i class="menuIcon fa fa-user-edit mx-2"></i> Modifier votre profil
             </span>
-            <span class="dropdown-item" id="listPhotosCmd">
+            <span class="dropdown-item" id="listPhotosMenuCmd">
                 <i class="menuIcon fa fa-image mx-2"></i> Liste des photos
             </span>`;
     else
@@ -115,7 +116,6 @@ function UpdateHeader(viewTitle, viewName) {
     `);
     attachCmd();
 }
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Actions and command
 async function login(credential) {
@@ -211,7 +211,54 @@ function saveContentScrollPosition() {
 function restoreContentScrollPosition() {
     $("#content")[0].scrollTop = contentScrollPosition;
 }
-function renderAbout() {
+async function renderError(message) {
+
+    switch (API.currentStatus) {
+        case 401:
+        case 403:
+        case 405:
+            message = "Accès refusé...Expiration de votre session. Veuillez vous reconnecter.";
+            await API.logout();
+            renderLoginForm();
+            break;
+        case 404: message = "Ressource introuvable..."; break;
+        case 409: message = "Ressource conflictuelle..."; break;
+        default: message = "Un problème est survenu...";
+    }
+
+    saveContentScrollPosition();
+    eraseContent();
+    UpdateHeader("Problème", "error");
+    $("#newPhotoCmd").hide();
+    $("#content").append(
+        $(`
+            <div class="errorContainer">
+                <b>${message}</b>
+            </div>
+            <hr>
+            <div class="form">
+                <button id="connectCmd" class="form-control btn-primary">Connexion</button>
+            </div>
+        `)
+    );
+    $('#connectCmd').on('click', renderLoginForm);
+    /*
+     $("#content").append(
+        $(`
+            <div class="errorContainer">
+                <b>${message}</b>
+            </div>
+            <hr>
+            <div class="systemErrorContainer">
+                <b>Message du serveur</b> : <br>
+                ${API.currentHttpError} <br>
+
+                <b>Status Http</b> :
+                ${API.currentStatus}
+            </div>
+        `)
+    ); */
+}function renderAbout() {
     saveContentScrollPosition();
     eraseContent();
     UpdateHeader("À propos...", "about");
@@ -253,7 +300,6 @@ function installPeriodicRefresh() {
         }
     }, periodicRefreshPeriod * 1000);
 }
-
 async function renderPhotos() {
     let loggedUser = API.retrieveLoggedUser();
     if (loggedUser) {
@@ -269,54 +315,62 @@ async function renderPhotos() {
         renderLoginForm();
 }
 function compareOwnerName(p1, p2) {
-   return p1.Owner.Name.localeCompare(p2.Owner.Name);
+    return p1.Owner.Name.localeCompare(p2.Owner.Name);
+}
+function renderPhoto(photo, loggedUser) {
+    let sharedIndicator = "";
+    let editCmd = "";
+    if (photo.OwnerId == loggedUser.Id || loggedUser.isAdmin) {
+        if (photo.Shared)
+            sharedIndicator = `
+                <div class="UserAvatarSmall transparentBackground" style="background-image:url('images/shared.png')" title="partagée">
+                </div>
+            `;
+        editCmd = `
+            <span photoId="${photo.Id}" class="editCmd cmdIconSmall fa fa-pencil" title="Editer ${photo.Title}"> </span>
+            <span photoId="${photo.Id}" class="deleteCmd cmdIconSmall fa fa-trash" title="Effacer ${photo.Title}"> </span>
+        `;
+    }
+    let html = ` 
+        <div class="photoLayout" photo_id="${photo.Id}">
+            <div class="photoTitleContainer" title="${photo.Description}">
+                <div class="photoTitle ellipsis">${photo.Title}</div> 
+                ${editCmd}
+            </div>
+            <div photoId="${photo.Id}" class="detailsCmd photoImage" style="background-image:url('${photo.Image}')">
+                <div class="UserAvatarSmall transparentBackground" style="background-image:url('${photo.Owner.Avatar}')" title="${photo.Owner.Name}"></div>
+                ${sharedIndicator}
+            </div>
+            <div class="photoCreationDate">${convertToFrenchDate(photo.Date)} </div>
+        </div>`;
+    return html;
 }
 async function renderPhotosList() {
     let photos = await API.GET_ALL("?sort=date,desc");
     if (!photos) {
-        renderError();
+        renderError("Un problème est survenu.");
     } else {
         currentETag = photos.ETag;
         let photosLayout = $("<div class='photosLayout'>");
         $("#content").empty();
         $("#content").append(photosLayout);
         if (photos.data.length > 0) {
+            0
+            let loggedUser = API.retrieveLoggedUser();
             switch (sortType) {
                 case "date": /* default sort */ break;
                 case "owners": photos.data.sort(compareOwnerName); break;
-                case "owner": break;
+                case "owner": photos.data = photos.data.filter(p => { return p.OwnerId == loggedUser.Id; }); break;
             }
-           
-            let loggedUser = API.retrieveLoggedUser();
-            photos.data.forEach(photo => {
-                let sharedIndicator = "";
-                let editCmd = "";
-                let photoOwner = photo.OwnerId == loggedUser.Id;
-                if ((sortType != "owner") || (sortType == "owner" && photoOwner)) {
-                    if (photoOwner) {
-                        if (photo.Shared)
-                            sharedIndicator = `
-                                <div class="UserAvatarSmall transparentBackground" style="background-image:url('images/shared.png')" title="partagée">
-                                </div>
-                            `;
-                        editCmd = `
-                        <span photoId="${photo.Id}" class="editCmd cmdIconSmall fa fa-pencil" title="Editer ${photo.Title}"> </span>
-                        <span photoId="${photo.Id}" class="deleteCmd cmdIconSmall fa fa-trash" title="Effacer ${photo.Title}"> </span>
-                    `;
-                    }
-                    photosLayout.append(renderPhoto(photo, editCmd, sharedIndicator));
-                }
-            });
+            photos.data.forEach(photo => { photosLayout.append(renderPhoto(photo, loggedUser)); });
             restoreContentScrollPosition();
-
         } else {
-            $('#content').append($(`<h4 class="form">aucune photo</h4>`));
+            photosLayout.append($(`<h4 class="form">aucune photo</h4>`));
         }
         $("#newPhotoCmd").on("click", function () {
             saveContentScrollPosition();
             renderNewPhotoForm();
         });
-        // Attached click events on command icons
         $(".editCmd").on("click", function () {
             saveContentScrollPosition();
             renderEditPhotoForm($(this).attr("photoId"));
@@ -331,20 +385,6 @@ async function renderPhotosList() {
         });
         $(".contactRow").on("click", function (e) { e.preventDefault(); });
     }
-}
-function renderPhoto(photo, editCmd = "", sharedIndicator = "") {
-    let html = ` <div class="photoLayout" photo_id="${photo.Id}">
-                    <div class="photoTitleContainer" title="${photo.Description}">
-                        <div class="photoTitle ellipsis">${photo.Title}</div> 
-                        ${editCmd}
-                    </div>
-                    <div photoId="${photo.Id}" class="detailsCmd photoImage" style="background-image:url('${photo.Image}')">
-                        <div class="UserAvatarSmall transparentBackground" style="background-image:url('${photo.Owner.Avatar}')" title="${photo.Owner.Name}"></div>
-                        ${sharedIndicator}
-                    </div>
-                    ${convertToFrenchDate(photo.Date)}
-                </div>`;
-    return html;
 }
 async function renderPhotoDetails(photoId) {
     let photo = await API.GET_ID(photoId);
@@ -377,7 +417,7 @@ async function renderNewPhotoForm() {
             <fieldset>
                 <legend>Informations</legend>
                 <input  type="text" 
-                        class="form-control Alpha" 
+                        class="form-control AlphaNum" 
                         name="Title" 
                         id="Title"
                         placeholder="Titre" 
@@ -385,7 +425,7 @@ async function renderNewPhotoForm() {
                         RequireMessage = 'Veuillez entrer un titre'
                         InvalidMessage = 'Le titre contient des caractères spéciaux' />
 
-                <textarea class="form-control Alpha" 
+                <textarea class="form-control" 
                           name="Description" 
                           id="Description"
                           placeholder="Description" 
@@ -441,7 +481,7 @@ async function renderEditPhotoForm(photoId) {
             <fieldset>
                 <legend>Informations</legend>
                 <input  type="text" 
-                        class="form-control Alpha" 
+                        class="form-control AlphaNum" 
                         name="Title" 
                         id="Title"
                         placeholder="Titre" 
@@ -450,7 +490,7 @@ async function renderEditPhotoForm(photoId) {
                         InvalidMessage = 'Le titre contient des caractères spéciaux' 
                         value="${photo.Title}"/>
 
-                <textarea class="form-control Alpha" 
+                <textarea class="form-control" 
                           name="Description" 
                           id="Description"
                           placeholder="Description" 
@@ -518,35 +558,8 @@ async function renderDeletePhotoForm(photoId) {
         `);
         $(".deletePhotoCmd").on("click", function () { deletePhoto($(this).attr("photoId")); })
         $("#abortCmd").on("click", renderPhotos);
-    }
-}
-function renderError(message) {
-    saveContentScrollPosition();
-    eraseContent();
-    UpdateHeader("Problème", "error");
-    $("#newPhotoCmd").hide();
-    $("#content").append(
-        $(`
-            <div class="errorContainer">
-                <b>${message}</b>
-            </div>
-            <hr>
-            <div class="systemErrorContainer">
-                <b>Message du serveur</b> : <br>
-                ${API.currentHttpError} <br>
-
-                <b>Status Http</b> :
-                ${API.currentStatus}
-            </div>
-        `)
-    );
-
-    contact = {};
-    contact.Id = 0;
-    contact.Name = "";
-    contact.Phone = "";
-    contact.Email = "";
-    return contact;
+    } else
+        renderError("Un problème est survenu.")
 }
 function renderVerify() {
     eraseContent();

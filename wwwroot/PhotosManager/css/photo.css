@@ -2,15 +2,16 @@
 .photosLayout {
     flex:1;
     display: grid;
-    grid-template-columns: repeat(auto-fill, 360px);
+    grid-template-columns: repeat(auto-fill, 370px);
     gap: 10px;
-    padding: 10px;
+
 }
 
 .photoLayout {
     flex:1;
     scroll-snap-align: start;
     margin: 0px;
+    padding-left: 10px;
 }
 
 .photoImage {
@@ -28,7 +29,7 @@
 .photoTitleContainer {
     height: 40px;
     display:grid;
-    grid-template-columns: auto 25px 25px;
+    grid-template-columns: 308px 25px 25px;
     align-items: center;
     cursor:default;
 }
@@ -59,6 +60,11 @@
     font-size: 1.2em;
     margin:5px;
     text-align:justify;
+}
+
+.photoCreationDate {
+    font-size: 0.8em !important;
+    color:dodgerblue;
 }
 .photoDetailsCreationDate {
     color:dodgerblue;

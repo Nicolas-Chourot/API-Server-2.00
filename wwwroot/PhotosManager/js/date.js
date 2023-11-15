@@ -12,5 +12,5 @@ function convertToFrenchDate(date) {
             }
         );
     }
-    return weekday + ", " + date.toLocaleDateString("fr-FR", options) + " - " + date.toLocaleTimeString("fr-FR");
+    return weekday + " le " + date.toLocaleDateString("fr-FR", options) + " @ " + date.toLocaleTimeString("fr-FR");
 }
