@@ -5,15 +5,16 @@ let loginMessage = "";
 let Email = "";
 let EmailError = "";
 let passwordError = "";
-let periodicRefreshPeriod = 5; // seconds
+let periodicRefreshPhotosListPeriod = 5; // seconds
 let currentETag = "";
 let currentViewName = "photosList";
-let delayTimeOut = 20; // seconds
+let delayTimeOut = 900; // seconds
+
 Init_UI();
 function Init_UI() {
     initTimeout(delayTimeOut, renderExpiredSession);
     renderLoginForm();
-    installPeriodicRefresh();
+    installPeriodicRefreshPhotosList();
 }
 function attachCmd() {
     $('#loginCmd').on('click', renderLoginForm);
@@ -282,7 +283,7 @@ function renderAbout() {
             </div>
         `))
 }
-function installPeriodicRefresh() {
+function installPeriodicRefreshPhotosList() {
     setInterval(async () => {
         if (currentViewName == "photosList") {
             let etag = await API.HEAD();
@@ -297,7 +298,7 @@ function installPeriodicRefresh() {
                 renderError("Le serveur ne répond pas.")
             }
         }
-    }, periodicRefreshPeriod * 1000);
+    }, periodicRefreshPhotosListPeriod * 1000);
 }
 async function renderPhotos() {
     timeout();
