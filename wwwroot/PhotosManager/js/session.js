@@ -17,7 +17,6 @@ let initialized = false;
 let timeBeforeRedirect = 5;
 let timeoutCallBack = () => {};
 let infinite = -1;
-let countDown = 20;
 let timeLeft = infinite;
 let maxStallingTime = infinite;
 

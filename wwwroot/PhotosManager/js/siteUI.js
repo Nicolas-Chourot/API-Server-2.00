@@ -13,7 +13,10 @@ let delayTimeOut = 900; // seconds
 Init_UI();
 function Init_UI() {
     initTimeout(delayTimeOut, renderExpiredSession);
-    renderLoginForm();
+    if (API.retrieveLoggedUser())
+        renderPhotos();
+    else
+        renderLoginForm();
     installPeriodicRefreshPhotosList();
 }
 function attachCmd() {
@@ -127,8 +130,8 @@ async function login(credential) {
     await API.login(credential.Email, credential.Password);
     if (API.error) {
         switch (API.currentStatus) {
-            case 482: passwordError = "Mot de passe incorrect";  renderLoginForm(); break;
-            case 481: EmailError = "Courriel introuvable";  renderLoginForm(); break;
+            case 482: passwordError = "Mot de passe incorrect"; renderLoginForm(); break;
+            case 481: EmailError = "Courriel introuvable"; renderLoginForm(); break;
             default: renderError("Le serveur ne répond pas"); break;
         }
     } else {

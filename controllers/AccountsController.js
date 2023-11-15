@@ -153,10 +153,6 @@ export default class AccountsController extends Controller {
                     let updatedUser = this.repository.update(user.Id, user);
                     if (this.repository.model.state.isValid) {
                         this.HttpContext.response.updated(updatedUser);
-
-                        // users have a link to imagesRepository
-                        // let imagesRepository = new ImagesRepository();
-                        // imagesRepository.newETag();
                     }
                     else {
                         if (this.repository.model.state.inConflict)
@@ -173,22 +169,7 @@ export default class AccountsController extends Controller {
     }
     // GET:account/remove/id
     remove(id) { // warning! this is not an API endpoint
-        // this.deleteAllUsersImages(id)
         if (Authorizations.granted(this.HttpContext, Authorizations.user()))
             super.remove(id);
     }
-    deleteAllUsersImages(userId) {
-        /*let imagesRepository = new ImagesRepository(this.req, true);
-        let images = imagesRepository.getAll();
-        let indexToDelete = [];
-        let index = 0;
-        for (let image of images) {
-            if (image.UserId == userId)
-                indexToDelete.push(index);
-            index++;
-        }
-        imagesRepository.removeByIndex(indexToDelete);
-        imagesRepository.newETag();*/
-    }
-
 }
