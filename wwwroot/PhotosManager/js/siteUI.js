@@ -17,6 +17,7 @@ function Init_UI() {
         renderPhotos();
     else
         renderLoginForm();
+    
     installPeriodicRefreshPhotosList();
 }
 function attachCmd() {
@@ -37,17 +38,27 @@ function attachCmd() {
 /// Header management
 function loggedUserMenu() {
     let loggedUser = API.retrieveLoggedUser();
-    if (loggedUser)
+    if (loggedUser) {
+        let manageUserMenu = `
+            <span class="dropdown-item" id="manageUserCm">
+                <i class="menuIcon fas fa-user-cog mx-2"></i> Gestion des usagers
+            </span>
+            <div class="dropdown-divider"></div>
+        `;
         return `
+            ${loggedUser.isAdmin ? manageUserMenu:""}
             <span class="dropdown-item" id="logoutCmd">
                 <i class="menuIcon fa fa-sign-out mx-2"></i> Déconnexion
             </span>
             <span class="dropdown-item" id="editProfilMenuCmd">
                 <i class="menuIcon fa fa-user-edit mx-2"></i> Modifier votre profil
             </span>
+            <div class="dropdown-divider"></div>
             <span class="dropdown-item" id="listPhotosMenuCmd">
                 <i class="menuIcon fa fa-image mx-2"></i> Liste des photos
-            </span>`;
+            </span>
+        `;
+    }
     else
         return `
             <span class="dropdown-item" id="loginCmd">
@@ -324,6 +335,7 @@ function compareOwnerName(p1, p2) {
 function renderPhoto(photo, loggedUser) {
     let sharedIndicator = "";
     let editCmd = "";
+    console.log(loggedUser.isAdmin)
     if (photo.OwnerId == loggedUser.Id || loggedUser.isAdmin) {
         if (photo.Shared)
             sharedIndicator = `
