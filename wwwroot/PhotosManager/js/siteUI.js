@@ -8,14 +8,13 @@ let passwordError = "";
 let periodicRefreshPeriod = 5; // seconds
 let currentETag = "";
 let currentViewName = "photosList";
-
+let delayTimeOut = 20; // seconds
 Init_UI();
-
 function Init_UI() {
-    renderPhotos();
+    initTimeout(delayTimeOut, renderExpiredSession);
+    renderLoginForm();
     installPeriodicRefresh();
 }
-
 function attachCmd() {
     $('#loginCmd').on('click', renderLoginForm);
     $('#logoutCmd').on('click', logout);
@@ -24,9 +23,9 @@ function attachCmd() {
     $('#editProfilMenuCmd').on('click', renderEditProfilForm);
     $('#editProfilCmd').on('click', renderEditProfilForm);
 
-    $('#sortByDate').on("click", () => { sortType = "date"; refreshHeader(); renderPhotosList(); });
-    $('#sortByOwners').on("click", () => { sortType = "owners"; refreshHeader(); renderPhotosList(); });
-    $('#ownerOnly').on("click", () => { sortType = "owner"; refreshHeader(); renderPhotosList(); });
+    $('#sortByDate').on("click", () => { sortType = "date"; refreshHeader(); renderPhotos(); });
+    $('#sortByOwners').on("click", () => { sortType = "owners"; refreshHeader(); renderPhotos(); });
+    $('#ownerOnly').on("click", () => { sortType = "owner"; refreshHeader(); renderPhotos(); });
 
     $('#aboutCmd').on("click", renderAbout);
 }
@@ -127,11 +126,10 @@ async function login(credential) {
     await API.login(credential.Email, credential.Password);
     if (API.error) {
         switch (API.currentStatus) {
-            case 482: passwordError = "Mot de passe incorrect"; break;
-            case 481: EmailError = "Courriel introuvable"; break;
-            default: loginMessage = "Le serveur ne répond pas"; break;
+            case 482: passwordError = "Mot de passe incorrect";  renderLoginForm(); break;
+            case 481: EmailError = "Courriel introuvable";  renderLoginForm(); break;
+            default: renderError("Le serveur ne répond pas"); break;
         }
-        renderLoginForm();
     } else {
         let loggedUser = API.retrieveLoggedUser();
         if (loggedUser.VerifyCode == 'verified')
@@ -212,7 +210,7 @@ function restoreContentScrollPosition() {
     $("#content")[0].scrollTop = contentScrollPosition;
 }
 async function renderError(message) {
-
+    noTimeout();
     switch (API.currentStatus) {
         case 401:
         case 403:
@@ -223,9 +221,8 @@ async function renderError(message) {
             break;
         case 404: message = "Ressource introuvable..."; break;
         case 409: message = "Ressource conflictuelle..."; break;
-        default: message = "Un problème est survenu...";
+        default: if (!message) message = "Un problème est survenu...";
     }
-
     saveContentScrollPosition();
     eraseContent();
     UpdateHeader("Problème", "error");
@@ -258,7 +255,9 @@ async function renderError(message) {
             </div>
         `)
     ); */
-}function renderAbout() {
+}
+function renderAbout() {
+    timeout();
     saveContentScrollPosition();
     eraseContent();
     UpdateHeader("À propos...", "about");
@@ -301,6 +300,7 @@ function installPeriodicRefresh() {
     }, periodicRefreshPeriod * 1000);
 }
 async function renderPhotos() {
+    timeout();
     let loggedUser = API.retrieveLoggedUser();
     if (loggedUser) {
         if (isVerified()) {
@@ -387,6 +387,7 @@ async function renderPhotosList() {
     }
 }
 async function renderPhotoDetails(photoId) {
+    timeout();
     let photo = await API.GET_ID(photoId);
     if (photo) {
         eraseContent();
@@ -409,6 +410,7 @@ async function renderPhotoDetails(photoId) {
     }
 }
 async function renderNewPhotoForm() {
+    timeout();
     eraseContent();
     UpdateHeader("Inscription", "createProfil");
     $("#newPhotoCmd").hide();
@@ -468,6 +470,7 @@ async function renderNewPhotoForm() {
     });
 }
 async function renderEditPhotoForm(photoId) {
+    timeout(delayTimeOut);
     let photo = await API.GET_ID(photoId);
     if (photo) {
         eraseContent();
@@ -536,6 +539,7 @@ async function renderEditPhotoForm(photoId) {
         renderError("Un problème est survenu.")
 }
 async function renderDeletePhotoForm(photoId) {
+    timeout();
     let photo = await API.GET_ID(photoId);
     if (photo) {
         eraseContent();
@@ -590,6 +594,7 @@ function renderVerify() {
     });
 }
 function renderCreateProfil() {
+    noTimeOut();
     eraseContent();
     UpdateHeader("Inscription", "createProfil");
     $("#newPhotoCmd").hide();
@@ -679,6 +684,7 @@ function renderCreateProfil() {
     });
 }
 function renderEditProfilForm() {
+    timeout();
     let loggedUser = API.retrieveLoggedUser();
     if (loggedUser) {
         eraseContent();
@@ -779,12 +785,18 @@ function renderEditProfilForm() {
         });
     }
 }
+function renderExpiredSession() {
+    noTimeout();
+    loginMessage = "Votre session est expirée. Veuillez vous reconnecter.";
+    renderLoginForm();
+}
 function renderLoginForm() {
+    noTimeout();
     eraseContent();
     UpdateHeader("Connexion", "Login");
     $("#newPhotoCmd").hide();
     $("#content").append(`
-        <div class="content">
+        <div class="content" style="text-align:center">
             <h3>${loginMessage}</h3>
             <form class="form" id="loginForm">
                 <input  type='email' 

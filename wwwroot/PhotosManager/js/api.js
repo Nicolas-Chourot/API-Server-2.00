@@ -157,7 +157,6 @@ class API {
                 url: serverHost + service,
                 type: 'HEAD',
                 headers: API.getBearerAuthorizationToken(),
-                contentType: 'text/plain',
                 complete: (request) => { resolve(request.getResponseHeader('ETag')) },
                 error: xhr => { API.setHttpErrorState(xhr); resolve(false); }
             });
