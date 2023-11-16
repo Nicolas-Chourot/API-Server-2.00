@@ -34,7 +34,7 @@ export default class APIServer {
         this.markRequestProcessStartTime();
         this.httpContext = await HttpContext.create(req, res);
         this.showShortRequestInfo();
-        if (!this.middlewaresPipeline.handleHttpRequest(this.httpContext))
+        if (!(await this.middlewaresPipeline.handleHttpRequest(this.httpContext)))
             this.httpContext.response.notFound('this end point does not exist...');
         this.showRequestProcessTime();
     }

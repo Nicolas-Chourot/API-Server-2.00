@@ -6,6 +6,6 @@ import Controller from './Controller.js';
 export default
     class WordsController extends Controller {
         constructor(HttpContext) {
-            super(HttpContext, new Repository(new WordModel()), Authorizations.admin());
+            super(HttpContext, new Repository(new WordModel()), Authorizations.anonymous());
         }
     }

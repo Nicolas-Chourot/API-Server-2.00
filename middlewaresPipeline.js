@@ -15,8 +15,8 @@ export default class MiddlewaresPipeline {
     }
     async handleHttpRequest(HttpContext) {
         for (let middleware of this.middlewares) {
-            let r = await middleware(HttpContext);
-            if (r) 
+            let result = await middleware(HttpContext);
+            if (result) 
                 return true;
         }
         return false;
