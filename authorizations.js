@@ -9,7 +9,7 @@ export default class Authorizations {
         return { readAccess: 0, writeAccess: 2 };
     }
     static userReadOnly() {
-        return { readAccess: 1, writeAccess: 0 };
+        return { readAccess: 1, writeAccess: 2 };
     }
     static user() {
         return { readAccess: 1, writeAccess: 1 };

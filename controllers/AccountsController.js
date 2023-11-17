@@ -12,7 +12,7 @@ export default class AccountsController extends Controller {
     }
     index(id) {
         if (id != undefined) {
-            if (Authorizations.granted(this.HttpContext, Authorizations.admin()))
+            if (Authorizations.readGranted(this.HttpContext, Authorizations.admin()))
                 this.HttpContext.response.JSON(this.repository.get(id));
             else
                 this.HttpContext.response.unAuthorized("Unauthorized access");
@@ -135,7 +135,7 @@ export default class AccountsController extends Controller {
     // PUT:account/modify body payload[{"Id": 0, "Name": "...", "Email": "...", "Password": "..."}]
     modify(user) {
         // empty asset members imply no change and there values will be taken from the stored record
-        if (Authorizations.granted(this.HttpContext, Authorizations.user())) {
+        if (Authorizations.writeGranted(this.HttpContext, Authorizations.user())) {
             if (this.repository != null) {
                 user.Created = utilities.nowInSeconds();
                 let foundedUser = this.repository.findByField("Id", user.Id);
@@ -169,7 +169,7 @@ export default class AccountsController extends Controller {
     }
     // GET:account/remove/id
     remove(id) { // warning! this is not an API endpoint
-        if (Authorizations.granted(this.HttpContext, Authorizations.user()))
+        if (Authorizations.writeGranted(this.HttpContext, Authorizations.user()))
             super.remove(id);
     }
 }
