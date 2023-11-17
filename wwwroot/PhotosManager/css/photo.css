@@ -65,6 +65,15 @@
 .photoCreationDate {
     font-size: 0.8em !important;
     color:dodgerblue;
+    display:grid;
+    grid-template-columns: auto 95px;
+    align-items: center;
+}
+.likesSummary {
+    display:grid;
+    grid-template-columns: 60px 30px;
+    align-items: center;
+    text-align: right;
 }
 .photoDetailsCreationDate {
     color:dodgerblue;

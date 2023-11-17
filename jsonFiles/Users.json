@@ -24,5 +24,18 @@
             "writeAccess": 2
         },
         "VerifyCode": "verified"
+    },
+    {
+        "Id": "db9d1d60-8557-11ee-aef8-c971e759ec07",
+        "Email": "Etienne.Forest@clg.qc.ca",
+        "Password": "password",
+        "Name": "Étienne Forest",
+        "Avatar": "db9d4470-8557-11ee-aef8-c971e759ec07.png",
+        "Created": 1700232289,
+        "VerifyCode": "verified",
+        "Authorizations": {
+            "readAccess": 1,
+            "writeAccess": 1
+        }
     }
 ]

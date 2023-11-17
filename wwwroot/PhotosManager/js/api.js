@@ -1,10 +1,10 @@
 
 
 
-////////////////////////////////////////////// API services call ///////////////////////////////////////////////////////
+////////////////////////////////////////////// API photos_APIs call ///////////////////////////////////////////////////////
 
 const serverHost = "http://localhost:5000";
-const service = "/api/photos";
+const photos_API = "/api/photos";
 class API {
     static initHttpState() {
         this.currentHttpError = "";
@@ -150,11 +150,11 @@ class API {
             });
         });
     }
-    static HEAD() {
+    static GetPhotosETag() {
         API.initHttpState();
         return new Promise(resolve => {
             $.ajax({
-                url: serverHost + service,
+                url: serverHost + photos_API,
                 type: 'HEAD',
                 headers: API.getBearerAuthorizationToken(),
                 complete: (request) => { resolve(request.getResponseHeader('ETag')) },
@@ -162,11 +162,11 @@ class API {
             });
         });
     }
-    static GET_ID(id) {
+    static GetPhotosById(id) {
         API.initHttpState();
         return new Promise(resolve => {
             $.ajax({
-                url: serverHost + service + "/" + id,
+                url: serverHost + photos_API + "/" + id,
                 type: 'GET',
                 headers: API.getBearerAuthorizationToken(),
                 success: data => { resolve(data); },
@@ -174,8 +174,8 @@ class API {
             });
         });
     }
-    static GET_ALL(queryString = null) {
-        let url = serverHost + service + (queryString ? queryString : "");
+    static GetPhotos(queryString = null) {
+        let url = serverHost + photos_API + (queryString ? queryString : "");
         return new Promise(resolve => {
             $.ajax({
                 url: url,
@@ -189,11 +189,11 @@ class API {
             });
         });
     }
-    static POST(data) {
+    static CreatePhoto(data) {
         API.initHttpState();
         return new Promise(resolve => {
             $.ajax({
-                url: serverHost + service,
+                url: serverHost + photos_API,
                 type: 'POST',
                 headers: API.getBearerAuthorizationToken(),
                 contentType: 'application/json',
@@ -203,11 +203,11 @@ class API {
             });
         });
     }
-    static PUT(data) {
+    static UpdatePhoto(data) {
         API.initHttpState();
         return new Promise(resolve => {
             $.ajax({
-                url: serverHost + service + "/" + data.Id,
+                url: serverHost + photos_API + "/" + data.Id,
                 type: 'PUT',
                 headers: API.getBearerAuthorizationToken(),
                 contentType: 'application/json',
@@ -217,11 +217,11 @@ class API {
             });
         });
     }
-    static DELETE(id) {
+    static DeletePhoto(id) {
         API.initHttpState();
         return new Promise(resolve => {
             $.ajax({
-                url: serverHost + service + "/" + id,
+                url: serverHost + photos_API + "/" + id,
                 type: 'DELETE',
                 headers: API.getBearerAuthorizationToken(),
                 success: () => { resolve(true) },

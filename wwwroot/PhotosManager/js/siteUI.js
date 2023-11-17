@@ -182,7 +182,7 @@ async function editProfil(profil) {
 }
 async function createProfil(profil) {
     if (await API.register(profil)) {
-        loginMessage = "Votre compte a été créé. Veuillez prendre vos courriels pour réccupérer votre code de vérification qui sou sera demander lors de votre prochaine connexion."
+        loginMessage = "Votre compte a été créé. Veuillez prendre vos courriels pour réccupérer votre code de vérification qui vous sera demandé lors de votre prochaine connexion."
         renderLoginForm();
     } else {
         renderError("Un problème est survenu.");
@@ -192,19 +192,19 @@ async function newPhoto(photo) {
     let loggedUser = API.retrieveLoggedUser();
     photo.OwnerId = loggedUser.Id;
     photo.Date = Date.now();
-    if (await API.POST(photo))
+    if (await API.CreatePhoto(photo))
         renderPhotos();
     else
         renderError("Un problème est survenu.");
 }
 async function editPhoto(photo) {
-    if (await API.PUT(photo))
+    if (await API.UpdatePhoto(photo))
         renderPhotos();
     else
         renderError("Un problème est survenu.");
 }
 async function deletePhoto(photoId) {
-    if (await API.DELETE(photoId))
+    if (await API.DeletePhoto(photoId))
         renderPhotos();
     else
         renderError("Un problème est survenu.");
@@ -300,7 +300,7 @@ function renderAbout() {
 function installPeriodicRefreshPhotosList() {
     setInterval(async () => {
         if (currentViewName == "photosList") {
-            let etag = await API.HEAD();
+            let etag = await API.GetPhotosETag();
             if (etag) {
                 if (currentETag != etag) {
                     currentETag = etag;
@@ -357,12 +357,17 @@ function renderPhoto(photo, loggedUser) {
                 <div class="UserAvatarSmall transparentBackground" style="background-image:url('${photo.Owner.Avatar}')" title="${photo.Owner.Name}"></div>
                 ${sharedIndicator}
             </div>
-            <div class="photoCreationDate">${convertToFrenchDate(photo.Date)} </div>
+            <div class="photoCreationDate">${convertToFrenchDate(photo.Date)} 
+                <div class="likesSummary">
+                    122467
+                    <i class="cmdIconSmall fa-regular fa-thumbs-up"></i> 
+                </div>
+            </div>
         </div>`;
     return html;
 }
 async function renderPhotosList() {
-    let photos = await API.GET_ALL("?sort=date,desc");
+    let photos = await API.GetPhotos("?sort=date,desc");
     if (!photos) {
         renderError("Un problème est survenu.");
     } else {
@@ -404,7 +409,7 @@ async function renderPhotosList() {
 }
 async function renderPhotoDetails(photoId) {
     timeout();
-    let photo = await API.GET_ID(photoId);
+    let photo = await API.GetPhotosById(photoId);
     if (photo) {
         eraseContent();
         UpdateHeader("Détails", "createProfil");
@@ -428,7 +433,7 @@ async function renderPhotoDetails(photoId) {
 async function renderNewPhotoForm() {
     timeout();
     eraseContent();
-    UpdateHeader("Inscription", "createProfil");
+    UpdateHeader("Ajout de photos", "newPhotos");
     $("#newPhotoCmd").hide();
     $("#content").append(` 
         <form class="form" id="newPhotoForm">
@@ -487,10 +492,10 @@ async function renderNewPhotoForm() {
 }
 async function renderEditPhotoForm(photoId) {
     timeout(delayTimeOut);
-    let photo = await API.GET_ID(photoId);
+    let photo = await API.GetPhotosById(photoId);
     if (photo) {
         eraseContent();
-        UpdateHeader("Modification", "editPhoto");
+        UpdateHeader("Modification de photo", "editPhoto");
         $("#newPhotoCmd").hide();
         $("#content").append(` 
         <form class="form" id="editPhotoForm">
@@ -556,10 +561,10 @@ async function renderEditPhotoForm(photoId) {
 }
 async function renderDeletePhotoForm(photoId) {
     timeout();
-    let photo = await API.GET_ID(photoId);
+    let photo = await API.GetPhotosById(photoId);
     if (photo) {
         eraseContent();
-        UpdateHeader("Retrait", "editPhoto");
+        UpdateHeader("Retrait de photo", "editPhoto");
         $("#newPhotoCmd").hide();
         $("#content").append(`
             <br>
@@ -820,9 +825,9 @@ function renderLoginForm() {
                         class="form-control"
                         required
                         RequireMessage = 'Veuillez entrer votre courriel'
-                        InvalidMessage = 'Courriel invalide';
+                        InvalidMessage = 'Courriel invalide'
                         placeholder="adresse de courriel"
-                        value=${Email} > 
+                        value='${Email}'> 
                 <span style='color:red'>${EmailError}</span>
                 <input  type='password' 
                         name='Password' 
