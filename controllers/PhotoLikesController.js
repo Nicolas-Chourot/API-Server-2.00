@@ -3,6 +3,7 @@ import Repository from '../models/repository.js';
 import PhotoLikeModel from '../models/photoLike.js';
 import PhotoModel from '../models/photo.js';
 import Controller from './Controller.js';
+import * as utilities from "../utilities.js";
 
 export default
     class PhotoLikes extends Controller {
@@ -11,28 +12,43 @@ export default
     }
     addLikeToPhoto(id, amount) {
         let photoRepository = new Repository(new PhotoModel());
-        let photo = photoRepository.get(id);
+        let photo = photoRepository.findByField("Id", id);
         photo.Likes += amount;
         photoRepository.update(photo.Id, photo);
+    }
+    find(PhotoId, UserId) {
+        let likes = this.repository.getAll({ PhotoId, UserId });
+        if (likes.length > 0) return likes[0];
+        return null;
     }
     get() {
         let PhotoId = this.HttpContext.path.params.PhotoId;
         let UserId = this.HttpContext.path.params.UserId;
-        let likes = this.repository.getAll({PhotoId, UserId});
-        if (likes.length > 0) {
-            super.get(likes[0].Id);
-        } else
-            this.HttpContext.response.notFound();
+        if (UserId) {
+            let like = this.find(PhotoId, UserId);
+            if (like) {
+                super.get(like.Id);
+            } else
+                this.HttpContext.response.notFound();
+        } else {
+            super.get();
+        }
     }
     post(data) {
-        let like = super.post(data);
-        this.addLikeToPhoto(like.PhotoId, 1);
+        let likeFound = this.find(data.PhotoId, data.UserId);
+        if (!likeFound) {
+            data.Date = utilities.nowInSeconds();
+            this.addLikeToPhoto(data.PhotoId, 1);
+            super.post(data);
+        } else {
+            this.remove(data);
+        }
     }
     remove(data) {
-        let likes = this.repository.getAll({PhotoId: data.PhotoId, UserId: data.UserId});
-        if (likes.length > 0) {
-            this.addLikeToPhoto(likes[0].PhotoId, -1);
-            super.remove(likes[0].Id);
+        let like = this.find(data.PhotoId, data.UserId);
+        if (like) {
+            this.addLikeToPhoto(like.PhotoId, -1);
+            super.remove(like.Id);
         } else {
             this.HttpContext.response.badRequest('Like does not exist');
         }

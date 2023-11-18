@@ -30,6 +30,7 @@ function attachCmd() {
 
     $('#sortByDate').on("click", () => { sortType = "date"; refreshHeader(); renderPhotos(); });
     $('#sortByOwners').on("click", () => { sortType = "owners"; refreshHeader(); renderPhotos(); });
+    $('#sortByLikes').on("click", () => { sortType = "likes"; refreshHeader(); renderPhotos(); });
     $('#ownerOnly').on("click", () => { sortType = "owner"; refreshHeader(); renderPhotos(); });
 
     $('#aboutCmd').on("click", renderAbout);
@@ -71,6 +72,7 @@ function viewMenu(viewName) {
         uncheckIcon = '<i class="menuIcon fa fa-fw mx-2"></i>';
         sortByDateCheck = (sortType == "date") ? checkIcon : uncheckIcon;
         sortByOwners = (sortType == "owners") ? checkIcon : uncheckIcon;
+        sortByLikes = (sortType == "likes") ? checkIcon : uncheckIcon;
         ownerOnly = (sortType == "owner") ? checkIcon : uncheckIcon;
         return `
             <div class="dropdown-divider"></div>
@@ -79,6 +81,9 @@ function viewMenu(viewName) {
             </span>
             <span class="dropdown-item" id="sortByOwners">
                 ${sortByOwners} <i class="menuIcon fa fa-users mx-2"></i>Photos par créateur
+            </span>
+            <span class="dropdown-item" id="sortByLikes">
+                ${sortByLikes} <i class="menuIcon fa-solid fa-heart mx-2"></i>Photos les plus aimées
             </span>
             <span class="dropdown-item" id="ownerOnly">
                 ${ownerOnly} <i class="menuIcon fa fa-user mx-2"></i>Mes photos
@@ -332,6 +337,12 @@ async function renderPhotos() {
 function compareOwnerName(p1, p2) {
     return p1.Owner.Name.localeCompare(p2.Owner.Name);
 }
+
+function compareLikes(p1, p2) {
+    if (p1.Likes == p2.Likes) return 0;
+    if (p1.Likes > p2.Likes) return -1;
+    return 1; 
+}
 function renderPhoto(photo, loggedUser) {
     let sharedIndicator = "";
     let editCmd = "";
@@ -381,6 +392,7 @@ async function renderPhotosList() {
             switch (sortType) {
                 case "date": /* default sort */ break;
                 case "owners": photos.data.sort(compareOwnerName); break;
+                case "likes": photos.data.sort(compareLikes); break;
                 case "owner": photos.data = photos.data.filter(p => { return p.OwnerId == loggedUser.Id; }); break;
             }
             photos.data.forEach(photo => { photosLayout.append(renderPhoto(photo, loggedUser)); });
@@ -411,8 +423,12 @@ async function renderPhotoDetails(photoId) {
     timeout();
     let photo = await API.GetPhotosById(photoId);
     if (photo) {
-        let userLike = API.GetUserPhotoLike(photo.Id);
-        
+        let userLike = await API.GetUserPhotoLike(photo.Id);
+        let likes = await API.GetPhotoLikes(photo.Id);
+        let likesList = "";
+        likes.forEach(like => {
+            likesList += like.UserName + "\n";
+        })
         eraseContent();
         UpdateHeader("Détails", "createProfil");
         $("#newPhotoCmd").hide();
@@ -429,11 +445,15 @@ async function renderPhotoDetails(photoId) {
                     ${convertToFrenchDate(photo.Date)}
                     <div class="likesSummary">
                         ${photo.Likes}
-                    <i class="cmdIconSmall ${userLike?"fa":"fa-regular"} fa-thumbs-up"></i> 
+                    <i class="cmdIconSmall ${userLike?"fa":"fa-regular"} fa-thumbs-up" id="addRemoveLikeCmd" title="${likesList}" ></i> 
                 </div>
                 </div>
             <div class="photoDetailsDescription">${photo.Description}</div>`
         );
+        $("#addRemoveLikeCmd").on("click", ()=>{
+            API.AddRemovePhotoLike(photo.Id);
+            renderPhotoDetails(photo.Id);
+        });
     }
 }
 async function renderNewPhotoForm() {

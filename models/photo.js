@@ -13,7 +13,7 @@ export default class Photo extends Model {
         this.addField('Image', 'asset');
         this.addField('Date','integer');
         this.addField('Shared','boolean');
-        this.addField('Likes','int');
+        this.addField('Likes','integer');
 
         this.setKey("Title");
     }

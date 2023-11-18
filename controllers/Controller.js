@@ -76,7 +76,7 @@ export default class Controller {
     remove(id) {
         if (Authorizations.writeGranted(this.HttpContext, this.authorizations)) {
             if (this.repository != null) {
-                if (this.HttpContext.path.id) {
+                if (id) {
                     if (this.repository.remove(id))
                         this.HttpContext.response.accepted();
                     else

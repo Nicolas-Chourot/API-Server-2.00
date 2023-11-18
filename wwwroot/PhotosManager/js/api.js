@@ -187,6 +187,32 @@ class API {
             });
         });
     }
+    static GetPhotoLikes(photoId) {
+        API.initHttpState();
+        return new Promise(resolve => {
+            $.ajax({
+                url: serverHost + photoLikes_API + `?PhotoId=${photoId}`,
+                type: 'GET',
+                headers: API.getBearerAuthorizationToken(),
+                success: data => { resolve(data); },
+                error: xhr => { API.setHttpErrorState(xhr); resolve(false); }
+            });
+        });
+    }
+    static AddRemovePhotoLike(photoId) {
+        API.initHttpState();
+        return new Promise(resolve => {
+            $.ajax({
+                url: serverHost + photoLikes_API,
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ PhotoId: photoId, UserId: API.retrieveLoggedUser().Id }),
+                headers: API.getBearerAuthorizationToken(),
+                success: data => { resolve(data); },
+                error: xhr => { API.setHttpErrorState(xhr); resolve(false); }
+            });
+        });
+    }
     static GetPhotos(queryString = null) {
         let url = serverHost + photos_API + (queryString ? queryString : "");
         return new Promise(resolve => {
