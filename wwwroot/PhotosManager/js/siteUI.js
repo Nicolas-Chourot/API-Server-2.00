@@ -359,7 +359,7 @@ function renderPhoto(photo, loggedUser) {
             </div>
             <div class="photoCreationDate">${convertToFrenchDate(photo.Date)} 
                 <div class="likesSummary">
-                    122467
+                    ${photo.Likes}
                     <i class="cmdIconSmall fa-regular fa-thumbs-up"></i> 
                 </div>
             </div>
@@ -411,6 +411,8 @@ async function renderPhotoDetails(photoId) {
     timeout();
     let photo = await API.GetPhotosById(photoId);
     if (photo) {
+        let userLike = API.GetUserPhotoLike(photo.Id);
+        
         eraseContent();
         UpdateHeader("Détails", "createProfil");
         $("#newPhotoCmd").hide();
@@ -424,7 +426,11 @@ async function renderPhotoDetails(photoId) {
                 <div class="photoDetailsTitle">${photo.Title}</div>
                 <img src="${photo.Image}" class="photoDetailsLargeImage">
                 <div class="photoDetailsCreationDate">
-                ${convertToFrenchDate(photo.Date)}
+                    ${convertToFrenchDate(photo.Date)}
+                    <div class="likesSummary">
+                        ${photo.Likes}
+                    <i class="cmdIconSmall ${userLike?"fa":"fa-regular"} fa-thumbs-up"></i> 
+                </div>
                 </div>
             <div class="photoDetailsDescription">${photo.Description}</div>`
         );

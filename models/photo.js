@@ -1,5 +1,6 @@
 import Model from './model.js';
 import UserModel from './user.js';
+import PhotoLikeModel from './photoLike.js';
 import Repository from '../models/repository.js';
 
 export default class Photo extends Model {
@@ -12,6 +13,7 @@ export default class Photo extends Model {
         this.addField('Image', 'asset');
         this.addField('Date','integer');
         this.addField('Shared','boolean');
+        this.addField('Likes','int');
 
         this.setKey("Title");
     }

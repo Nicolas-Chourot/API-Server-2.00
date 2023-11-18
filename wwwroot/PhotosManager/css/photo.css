@@ -78,6 +78,9 @@
 .photoDetailsCreationDate {
     color:dodgerblue;
     margin:5px;
+    display:grid;
+    grid-template-columns: auto 95px;
+    align-items: center;
 }
 .photoDetailsLargeImage {
     width:100%;
