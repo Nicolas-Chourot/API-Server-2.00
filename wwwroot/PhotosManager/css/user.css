@@ -97,3 +97,9 @@
     cursor: pointer;
 }
 
+.loginMessage {
+    font-size: 1.2em;
+    color:red;
+    padding-top:20px;
+}
+

@@ -34,8 +34,6 @@ class API {
     }
     static retrieveLoggedUser() {
         let user = JSON.parse(sessionStorage.getItem('user'));
-        if (user)
-            user.isAdmin = user.Authorizations.readAccess == 2 && user.Authorizations.writeAccess == 2;
         return user;
     }
     static eraseLoggedUser() {
@@ -80,6 +78,32 @@ class API {
                 contentType: 'application/json',
                 data: JSON.stringify(profil),
                 success: profil => { resolve(profil); },
+                error: xhr => { API.setHttpErrorState(xhr); resolve(false); }
+            });
+        });
+    }
+    static PromoteUser(UserId) {
+        API.initHttpState();
+        return new Promise(resolve => {
+            $.ajax({
+                url: serverHost + "/accounts/promote",
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({Id : UserId}),
+                success: () => { resolve(true); },
+                error: xhr => { API.setHttpErrorState(xhr); resolve(false); }
+            });
+        });
+    }
+    static BlockUser(UserId) {
+        API.initHttpState();
+        return new Promise(resolve => {
+            $.ajax({
+                url: serverHost + "/accounts/block",
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({Id : UserId}),
+                success: () => { resolve(true); },
                 error: xhr => { API.setHttpErrorState(xhr); resolve(false); }
             });
         });

@@ -18,8 +18,9 @@ export default class User extends Model {
     bindExtraData(instance) {
         instance = super.bindExtraData(instance);
         instance.Password = "************";
-        if (instance.VerifyCode !== "verified")
-            instance.VerifyCode = "unverified";
+        if (instance.VerifyCode !== "verified") instance.VerifyCode = "unverified";
+        instance.isBlocked = instance.Authorizations.readAccess == -1;
+        instance.isAdmin = instance.Authorizations.readAccess == 2 && instance.Authorizations.writeAccess == 2;
         return instance;
     }
 }

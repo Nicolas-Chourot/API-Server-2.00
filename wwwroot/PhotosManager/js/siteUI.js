@@ -8,7 +8,7 @@ let passwordError = "";
 let periodicRefreshPhotosListPeriod = 5; // seconds
 let currentETag = "";
 let currentViewName = "photosList";
-let delayTimeOut = 900; // seconds
+let delayTimeOut = 20; // seconds
 
 Init_UI();
 function Init_UI() {
@@ -153,8 +153,14 @@ async function login(credential) {
         }
     } else {
         let loggedUser = API.retrieveLoggedUser();
-        if (loggedUser.VerifyCode == 'verified')
-            renderPhotos();
+        if (loggedUser.VerifyCode == 'verified') {
+            if (!loggedUser.isBlocked)
+                renderPhotos();
+            else {
+                loginMessage = "Votre compte a été par l'administrateur";
+                renderLoginForm();
+            }
+        }
         else
             renderVerify();
     }
@@ -338,7 +344,6 @@ async function renderPhotos() {
 function compareOwnerName(p1, p2) {
     return p1.Owner.Name.localeCompare(p2.Owner.Name);
 }
-
 function compareLikes(p1, p2) {
     if (p1.Likes == p2.Likes) return 0;
     if (p1.Likes > p2.Likes) return -1;
@@ -772,16 +777,18 @@ async function renderManageUsers() {
                         $("#content").append(userRow);
                     }
                 });
-                $(".promoteUserCmd").on("click", function() {
+                $(".promoteUserCmd").on("click", async function() {
                     let userId = $(this).attr("userId");
+                    await API.PromoteUser(userId);
                     renderManageUsers();
                 });
-                $(".blockUserCmd").on("click", function() {
+                $(".blockUserCmd").on("click", async function() {
                     let userId = $(this).attr("userId");
+                    await API.BlockUser(userId);
                     renderManageUsers();
                 });
                 $(".removeUserCmd").on("click", function() {
-                    let userId = $(this).attr("userId");
+                    //let userId = $(this).attr("userId");
                     renderManageUsers();
                 });
             }
@@ -904,7 +911,7 @@ function renderLoginForm() {
     $("#newPhotoCmd").hide();
     $("#content").append(`
         <div class="content" style="text-align:center">
-            <h3>${loginMessage}</h3>
+            <div class="loginMessage">${loginMessage}</div>
             <form class="form" id="loginForm">
                 <input  type='email' 
                         name='Email'

@@ -131,6 +131,32 @@ export default class AccountsController extends Controller {
         } else
             this.HttpContext.response.notImplemented();
     }
+    promote(user) {
+        if (this.repository != null) {
+            let foundUser = this.repository.findByField("Id", user.Id);
+            foundUser.Authorizations.readAccess = foundUser.Authorizations.readAccess == 1 ? 2 : 1;
+            foundUser.Authorizations.writeAccess = foundUser.Authorizations.writeAccess == 1 ? 2 : 1;
+            let updatedUser = this.repository.update(user.Id, foundUser);
+            if (this.repository.model.state.isValid)
+                this.HttpContext.response.updated(updatedUser);
+            else
+                this.HttpContext.response.badRequest(this.repository.model.state.errors);
+        } else
+            this.HttpContext.response.notImplemented();
+    }
+    block(user) {
+        if (this.repository != null) {
+            let foundUser = this.repository.findByField("Id", user.Id);
+            foundUser.Authorizations.readAccess = foundUser.Authorizations.readAccess == 1 ? -1 : 1;
+            foundUser.Authorizations.writeAccess = foundUser.Authorizations.writeAccess == 1 ? -1 : 1;
+            let updatedUser = this.repository.update(user.Id, foundUser);
+            if (this.repository.model.state.isValid)
+                this.HttpContext.response.updated(updatedUser);
+            else
+                this.HttpContext.response.badRequest(this.repository.model.state.errors);
+        } else
+            this.HttpContext.response.notImplemented();
+    }
     // PUT:account/modify body payload[{"Id": 0, "Name": "...", "Email": "...", "Password": "..."}]
     modify(user) {
         // empty asset members imply no change and there values will be taken from the stored record
