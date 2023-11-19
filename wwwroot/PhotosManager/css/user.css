@@ -38,7 +38,9 @@
 .redCmd {
     color:red !important;
 }
-
+.dodgerblueCmd {
+    color:dodgerblue !important;
+}
 .greenCmd {
     color:rgb(0, 189, 0) !important;
 }

@@ -53,7 +53,6 @@ export default class AccountsController extends Controller {
             this.HttpContext.response.badRequest("UserId is not specified.")
         }
     }
-
     sendVerificationEmail(user) {
         let html = `
                 Bonjour ${user.Name}, <br /> <br />

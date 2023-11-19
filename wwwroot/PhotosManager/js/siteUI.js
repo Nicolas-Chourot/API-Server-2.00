@@ -17,7 +17,7 @@ function Init_UI() {
         renderPhotos();
     else
         renderLoginForm();
-    
+
     installPeriodicRefreshPhotosList();
 }
 function attachCmd() {
@@ -26,6 +26,7 @@ function attachCmd() {
     $('#listPhotosCmd').on('click', renderPhotos);
     $('#listPhotosMenuCmd').on('click', renderPhotos);
     $('#editProfilMenuCmd').on('click', renderEditProfilForm);
+    $('#renderManageUsersMenuCmd').on('click', renderManageUsers);
     $('#editProfilCmd').on('click', renderEditProfilForm);
 
     $('#sortByDate').on("click", () => { sortType = "date"; refreshHeader(); renderPhotos(); });
@@ -41,13 +42,13 @@ function loggedUserMenu() {
     let loggedUser = API.retrieveLoggedUser();
     if (loggedUser) {
         let manageUserMenu = `
-            <span class="dropdown-item" id="manageUserCm">
+            <span class="dropdown-item" id="renderManageUsersMenuCmd">
                 <i class="menuIcon fas fa-user-cog mx-2"></i> Gestion des usagers
             </span>
             <div class="dropdown-divider"></div>
         `;
         return `
-            ${loggedUser.isAdmin ? manageUserMenu:""}
+            ${loggedUser.isAdmin ? manageUserMenu : ""}
             <span class="dropdown-item" id="logoutCmd">
                 <i class="menuIcon fa fa-sign-out mx-2"></i> Déconnexion
             </span>
@@ -341,7 +342,7 @@ function compareOwnerName(p1, p2) {
 function compareLikes(p1, p2) {
     if (p1.Likes == p2.Likes) return 0;
     if (p1.Likes > p2.Likes) return -1;
-    return 1; 
+    return 1;
 }
 function renderPhoto(photo, loggedUser) {
     let sharedIndicator = "";
@@ -445,12 +446,12 @@ async function renderPhotoDetails(photoId) {
                     ${convertToFrenchDate(photo.Date)}
                     <div class="likesSummary">
                         ${photo.Likes}
-                    <i class="cmdIconSmall ${userLike?"fa":"fa-regular"} fa-thumbs-up" id="addRemoveLikeCmd" title="${likesList}" ></i> 
+                    <i class="cmdIconSmall ${userLike ? "fa" : "fa-regular"} fa-thumbs-up" id="addRemoveLikeCmd" title="${likesList}" ></i> 
                 </div>
                 </div>
             <div class="photoDetailsDescription">${photo.Description}</div>`
         );
-        $("#addRemoveLikeCmd").on("click", ()=>{
+        $("#addRemoveLikeCmd").on("click", () => {
             API.AddRemovePhotoLike(photo.Id);
             renderPhotoDetails(photo.Id);
         });
@@ -729,6 +730,65 @@ function renderCreateProfil() {
         showWaitingGif();
         createProfil(profil);
     });
+}
+async function renderManageUsers() {
+    timeout();
+    let loggedUser = API.retrieveLoggedUser();
+    if (loggedUser.isAdmin) {
+        if (isVerified()) {
+            showWaitingGif();
+            UpdateHeader('Gestion des usagers', 'manageUsers')
+            $("#newPhotoCmd").hide();
+            $("#abort").hide();
+            let users = await API.GetAccounts();
+            if (API.error) {
+                renderError();
+            } else {
+                $("#content").empty();
+                users.data.forEach(user => {
+                    if (user.Id != loggedUser.Id) {
+                        let typeIcon = user.Authorizations.readAccess == 2 ? "fas fa-user-cog" : "fas fa-user-alt";
+                        typeTitle = user.Authorizations.readAccess == 2 ? "Retirer le droit administrateur à" : "Octroyer le droit administrateur à";
+                        let blockedClass = user.Authorizations.readAccess == -1 ? "class=' blockUserCmd cmdIconVisible fa fa-ban redCmd'" : "class='blockUserCmd cmdIconVisible fa-regular fa-circle greenCmd'";
+                        let blockedTitle = user.Authorizations.readAccess == -1 ? "Débloquer $name" : "Bloquer $name";
+                        let userRow = `
+                        <div class="UserRow"">
+                            <div class="UserContainer noselect">
+                                <div class="UserLayout">
+                                    <div class="UserAvatar" style="background-image:url('${user.Avatar}')"></div>
+                                    <div class="UserInfo">
+                                        <span class="UserName">${user.Name}</span>
+                                        <a href="mailto:${user.Email}" class="UserEmail" target="_blank" >${user.Email}</a>
+                                    </div>
+                                </div>
+                                <div class="UserCommandPanel">
+                                    <span class="promoteUserCmd cmdIconVisible ${typeIcon} dodgerblueCmd" title="${typeTitle} ${user.Name}" userId="${user.Id}"></span>
+                                    <span ${blockedClass} title="${blockedTitle}" userId="${user.Id}" ></span>
+                                    <span class="removeUserCmd cmdIconVisible fas fa-user-slash goldenrodCmd" title="Effacer ${user.Name}" userId="${user.Id}"></span>
+                                </div>
+                            </div>
+                        </div>           
+                        `;
+                        $("#content").append(userRow);
+                    }
+                });
+                $(".promoteUserCmd").on("click", function() {
+                    let userId = $(this).attr("userId");
+                    renderManageUsers();
+                });
+                $(".blockUserCmd").on("click", function() {
+                    let userId = $(this).attr("userId");
+                    renderManageUsers();
+                });
+                $(".removeUserCmd").on("click", function() {
+                    let userId = $(this).attr("userId");
+                    renderManageUsers();
+                });
+            }
+        } else
+            renderVerify();
+    } else
+        renderLoginForm();
 }
 function renderEditProfilForm() {
     timeout();
