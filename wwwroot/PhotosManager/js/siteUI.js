@@ -8,11 +8,16 @@ let passwordError = "";
 let periodicRefreshPhotosListPeriod = 5; // seconds
 let currentETag = "";
 let currentViewName = "photosList";
-let delayTimeOut = 20; // seconds
+let delayTimeOut = 200; // seconds
+let photoContainerWidth = 400;
+let photoContainerHeight = 375;
+let limit = getLimit();
+let offset = 0;
 
 Init_UI();
 function Init_UI() {
     initTimeout(delayTimeOut, renderExpiredSession);
+    installWindowResizeHandler();
     if (API.retrieveLoggedUser())
         renderPhotos();
     else
@@ -383,15 +388,20 @@ function renderPhoto(photo, loggedUser) {
         </div>`;
     return html;
 }
-async function renderPhotosList() {
-    let photos = await API.GetPhotos("?sort=date,desc");
+async function renderPhotosList(refresh = true) {
+    let photosCount = limit * (offset + 1);
+    let queryString = refresh ? "?sort=date,desc&limit=" + photosCount + "&offset=" + 0 : "?sort=date,desc&limit=" + limit + "&offset=" + offset;
+    let photos = await API.GetPhotos(queryString);
+    let photosLayout = $("<div class='photosLayout' id='photosLayout'>");
     if (!photos) {
         renderError("Un problème est survenu.");
     } else {
         currentETag = photos.ETag;
-        let photosLayout = $("<div class='photosLayout'>");
-        $("#content").empty();
-        $("#content").append(photosLayout);
+        if (refresh) {
+            saveContentScrollPosition();
+            eraseContent();
+            $("#content").append(photosLayout);
+        }
         if (photos.data.length > 0) {
             0
             let loggedUser = API.retrieveLoggedUser();
@@ -402,10 +412,20 @@ async function renderPhotosList() {
                 case "owner": photos.data = photos.data.filter(p => { return p.OwnerId == loggedUser.Id; }); break;
             }
             photos.data.forEach(photo => { photosLayout.append(renderPhoto(photo, loggedUser)); });
-            restoreContentScrollPosition();
+            $("#content").on("scroll", function () {
+                console.log($("#content").scrollTop())
+                if ($("#content").scrollTop() + $("#content").innerHeight() > ($("#photosLayout").height() - photoContainerHeight)) {
+                    $("#content").off();
+                    offset++;
+                    console.log(offset);
+                    renderPhotosList(false);
+                }
+            });
         } else {
             photosLayout.append($(`<h4 class="form">aucune photo</h4>`));
         }
+        if (refresh)
+            restoreContentScrollPosition();
         $("#newPhotoCmd").on("click", function () {
             saveContentScrollPosition();
             renderNewPhotoForm();
@@ -777,17 +797,17 @@ async function renderManageUsers() {
                         $("#content").append(userRow);
                     }
                 });
-                $(".promoteUserCmd").on("click", async function() {
+                $(".promoteUserCmd").on("click", async function () {
                     let userId = $(this).attr("userId");
                     await API.PromoteUser(userId);
                     renderManageUsers();
                 });
-                $(".blockUserCmd").on("click", async function() {
+                $(".blockUserCmd").on("click", async function () {
                     let userId = $(this).attr("userId");
                     await API.BlockUser(userId);
                     renderManageUsers();
                 });
-                $(".removeUserCmd").on("click", function() {
+                $(".removeUserCmd").on("click", function () {
                     //let userId = $(this).attr("userId");
                     renderManageUsers();
                 });
@@ -956,4 +976,31 @@ function getFormData($form) {
         jsonObject[control.name] = control.value.replace(removeTag, "");
     });
     return jsonObject;
+}
+function getLimit() {
+    // estimate the value of limit according to height of content
+    return Math.round(  ($("#content").innerHeight() / photoContainerHeight) *
+                        ($("#content").innerWidth() / photoContainerWidth));
+}
+function installWindowResizeHandler() {
+    var resizeTimer = null;
+    var resizeEndTriggerDelai = 250;
+    $(window).on('resize', function (e) {
+        if (!resizeTimer) {
+            $(window).trigger('resizestart');
+        }
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function () {
+            resizeTimer = null;
+            $(window).trigger('resizeend');
+        }, resizeEndTriggerDelai);
+    }).on('resizestart', function () {
+        console.log('resize start');
+    }).on('resizeend', function () {
+        console.log('resize end');
+        if ($('#wordsList') != null) {
+            limit = getLimit();
+            renderPhotosList();
+        }
+    });
 }
