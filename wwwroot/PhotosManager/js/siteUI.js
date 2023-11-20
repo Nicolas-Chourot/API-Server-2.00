@@ -902,6 +902,7 @@ function renderEditProfilForm() {
 function renderExpiredSession() {
     noTimeout();
     loginMessage = "Votre session est expirée. Veuillez vous reconnecter.";
+    logout();
     renderLoginForm();
 }
 function renderLoginForm() {
