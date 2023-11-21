@@ -60,7 +60,7 @@
     overflow-y: auto;
     scrollbar-width: thin;
     scrollbar-gutter: stable;
-    scroll-snap-type: y mandatory;
+   /* scroll-snap-type: y;*/
     background-color: white;
     padding-bottom: 8px;
 }

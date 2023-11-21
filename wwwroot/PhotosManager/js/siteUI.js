@@ -32,7 +32,7 @@ function getViewPortPhotosRanges() {
     // estimate the value of limit according to height of content
     VerticalPhotosCount = Math.round($("#content").innerHeight() / photoContainerHeight);
     HorizontalPhotosCount = Math.round($("#content").innerWidth() / photoContainerWidth);
-    limit = VerticalPhotosCount * HorizontalPhotosCount;
+    limit = (VerticalPhotosCount + 1) * HorizontalPhotosCount;
     console.log("VerticalPhotosCount:",VerticalPhotosCount, "HorizontalPhotosCount:",HorizontalPhotosCount)
     offset = 0;
 }
@@ -441,6 +441,7 @@ async function renderPhotosList(appendToView = false) {
         } else {
             photosLayout = $("#photosLayout");
         }
+        
         if (photos.data.length > 0) {
             let loggedUser = API.retrieveLoggedUser();
             switch (sortType) {
@@ -450,6 +451,7 @@ async function renderPhotosList(appendToView = false) {
                 case "owner": photos.data = photos.data.filter(p => { return p.OwnerId == loggedUser.Id; }); break;
             }
             photos.data.forEach(photo => { photosLayout.append(renderPhoto(photo, loggedUser)); });
+           
             $("#content").off();
             $("#content").on("scroll", function () {
                 if ($("#content").scrollTop() + $("#content").innerHeight() > ($("#photosLayout").height() /*- photoContainerHeight*/)) {

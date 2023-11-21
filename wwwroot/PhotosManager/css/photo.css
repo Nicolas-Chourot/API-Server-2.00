@@ -9,10 +9,17 @@
 
 .photoLayout {
     flex:1;
-    scroll-snap-align: start;
+    /*scroll-snap-align: start;*/
     margin: 0px;
     padding-left: 10px;
 }
+
+.photoLayoutNoScrollSnap {
+    flex:1;
+    margin: 0px;
+    padding-left: 10px;
+}
+
 
 .photoImage {
     display:flex;
