@@ -10,12 +10,15 @@ let currentETag = "";
 let currentViewName = "photosList";
 let delayTimeOut = 200; // seconds
 let photoContainerWidth = 400;
-let photoContainerHeight = 375;
-let limit = getLimit();
+let photoContainerHeight = 400;
+let limit;
+let HorizontalPhotosCount;
+let VerticalPhotosCount;
 let offset = 0;
 
 Init_UI();
 function Init_UI() {
+    getViewPortPhotosRanges();
     initTimeout(delayTimeOut, renderExpiredSession);
     installWindowResizeHandler();
     if (API.retrieveLoggedUser())
@@ -24,6 +27,37 @@ function Init_UI() {
         renderLoginForm();
 
     installPeriodicRefreshPhotosList();
+}
+function getViewPortPhotosRanges() {
+    // estimate the value of limit according to height of content
+    VerticalPhotosCount = Math.round($("#content").innerHeight() / photoContainerHeight);
+    HorizontalPhotosCount = Math.round($("#content").innerWidth() / photoContainerWidth);
+    limit = VerticalPhotosCount * HorizontalPhotosCount;
+    console.log("VerticalPhotosCount:",VerticalPhotosCount, "HorizontalPhotosCount:",HorizontalPhotosCount)
+    offset = 0;
+}
+function installWindowResizeHandler() {
+    var resizeTimer = null;
+    var resizeEndTriggerDelai = 250;
+    $(window).on('resize', function (e) {
+        if (!resizeTimer) {
+            $(window).trigger('resizestart');
+        }
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function () {
+            resizeTimer = null;
+            $(window).trigger('resizeend');
+        }, resizeEndTriggerDelai);
+    }).on('resizestart', function () {
+        console.log('resize start');
+    }).on('resizeend', function () {
+        console.log('resize end');
+        if ($('#photosLayout') != null) {
+            getViewPortPhotosRanges();
+            if (currentViewName == "photosList")
+                renderPhotosList();
+        }
+    });
 }
 function attachCmd() {
     $('#loginCmd').on('click', renderLoginForm);
@@ -357,7 +391,6 @@ function compareLikes(p1, p2) {
 function renderPhoto(photo, loggedUser) {
     let sharedIndicator = "";
     let editCmd = "";
-    console.log(loggedUser.isAdmin)
     if (photo.OwnerId == loggedUser.Id || loggedUser.isAdmin) {
         if (photo.Shared)
             sharedIndicator = `
@@ -388,22 +421,27 @@ function renderPhoto(photo, loggedUser) {
         </div>`;
     return html;
 }
-async function renderPhotosList(refresh = true) {
+async function renderPhotosList(appendToView = false) {
     let photosCount = limit * (offset + 1);
-    let queryString = refresh ? "?sort=date,desc&limit=" + photosCount + "&offset=" + 0 : "?sort=date,desc&limit=" + limit + "&offset=" + offset;
+    let queryString = appendToView ? "?sort=date,desc&limit=" + limit + "&offset=" + offset : "?sort=date,desc&limit=" + photosCount + "&offset=" + 0;
+    console.log(limit, offset, appendToView);
     let photos = await API.GetPhotos(queryString);
-    let photosLayout = $("<div class='photosLayout' id='photosLayout'>");
+   
     if (!photos) {
         renderError("Un problème est survenu.");
     } else {
         currentETag = photos.ETag;
-        if (refresh) {
+        let photosLayout;
+
+        if (!appendToView) {
             saveContentScrollPosition();
             eraseContent();
+            photosLayout = $("<div class='photosLayout' id='photosLayout'>");
             $("#content").append(photosLayout);
+        } else {
+            photosLayout = $("#photosLayout");
         }
         if (photos.data.length > 0) {
-            0
             let loggedUser = API.retrieveLoggedUser();
             switch (sortType) {
                 case "date": /* default sort */ break;
@@ -412,19 +450,21 @@ async function renderPhotosList(refresh = true) {
                 case "owner": photos.data = photos.data.filter(p => { return p.OwnerId == loggedUser.Id; }); break;
             }
             photos.data.forEach(photo => { photosLayout.append(renderPhoto(photo, loggedUser)); });
+            $("#content").off();
             $("#content").on("scroll", function () {
-                console.log($("#content").scrollTop())
-                if ($("#content").scrollTop() + $("#content").innerHeight() > ($("#photosLayout").height() - photoContainerHeight)) {
-                    $("#content").off();
-                    offset++;
-                    console.log(offset);
-                    renderPhotosList(false);
+                if ($("#content").scrollTop() + $("#content").innerHeight() > ($("#photosLayout").height() /*- photoContainerHeight*/)) {
+                    offset ++;
+                    renderPhotosList(true /* appendToView */);
                 }
             });
         } else {
-            photosLayout.append($(`<h4 class="form">aucune photo</h4>`));
+            if (!appendToView)
+                photosLayout.append($(`<h4 class="form">aucune photo</h4>`));
+            else {
+                offset--;
+            }
         }
-        if (refresh)
+        if (!appendToView)
             restoreContentScrollPosition();
         $("#newPhotoCmd").on("click", function () {
             saveContentScrollPosition();
@@ -489,6 +529,7 @@ async function renderNewPhotoForm() {
     $("#newPhotoCmd").hide();
     $("#content").append(` 
         <form class="form" id="newPhotoForm">
+            <input type="hidden" name = "Likes" value="0">
             <fieldset>
                 <legend>Informations</legend>
                 <input  type="text" 
@@ -554,6 +595,7 @@ async function renderEditPhotoForm(photoId) {
             <input type="hidden" name = "Id" value="${photo.Id}">
             <input type="hidden" name = "Date" value="${photo.Date}">
             <input type="hidden" name = "OwnerId" value="${photo.OwnerId}">
+            <input type="hidden" name = "Likes" value="${photo.Likes}">
             <fieldset>
                 <legend>Informations</legend>
                 <input  type="text" 
@@ -977,30 +1019,4 @@ function getFormData($form) {
     });
     return jsonObject;
 }
-function getLimit() {
-    // estimate the value of limit according to height of content
-    return Math.round(  ($("#content").innerHeight() / photoContainerHeight) *
-                        ($("#content").innerWidth() / photoContainerWidth));
-}
-function installWindowResizeHandler() {
-    var resizeTimer = null;
-    var resizeEndTriggerDelai = 250;
-    $(window).on('resize', function (e) {
-        if (!resizeTimer) {
-            $(window).trigger('resizestart');
-        }
-        clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(function () {
-            resizeTimer = null;
-            $(window).trigger('resizeend');
-        }, resizeEndTriggerDelai);
-    }).on('resizestart', function () {
-        console.log('resize start');
-    }).on('resizeend', function () {
-        console.log('resize end');
-        if ($('#wordsList') != null) {
-            limit = getLimit();
-            renderPhotosList();
-        }
-    });
-}
+
