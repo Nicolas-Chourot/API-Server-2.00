@@ -196,7 +196,7 @@ async function login(credential) {
             if (!loggedUser.isBlocked)
                 renderPhotos();
             else {
-                loginMessage = "Votre compte a été par l'administrateur";
+                loginMessage = "Votre compte a été bloqué par l'administrateur";
                 renderLoginForm();
             }
         }
