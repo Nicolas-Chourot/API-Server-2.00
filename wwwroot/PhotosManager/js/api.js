@@ -89,7 +89,7 @@ class API {
                 url: serverHost + "/accounts/promote",
                 type: 'POST',
                 contentType: 'application/json',
-                data: JSON.stringify({Id : UserId}),
+                data: JSON.stringify({ Id: UserId }),
                 success: () => { resolve(true); },
                 error: xhr => { API.setHttpErrorState(xhr); resolve(false); }
             });
@@ -102,7 +102,7 @@ class API {
                 url: serverHost + "/accounts/block",
                 type: 'POST',
                 contentType: 'application/json',
-                data: JSON.stringify({Id : UserId}),
+                data: JSON.stringify({ Id: UserId }),
                 success: () => { resolve(true); },
                 error: xhr => { API.setHttpErrorState(xhr); resolve(false); }
             });
@@ -180,6 +180,22 @@ class API {
         return new Promise(resolve => {
             $.ajax({
                 url: serverHost + "/accounts",
+                contentType: 'application/json',
+                type: 'GET',
+                headers: API.getBearerAuthorizationToken(),
+                success: (data, status, xhr) => {
+                    let ETag = xhr.getResponseHeader("ETag");
+                    resolve({ data, ETag });
+                },
+                error: xhr => { API.setHttpErrorState(xhr); resolve(false); }
+            });
+        });
+    }
+    static GetAccount(userId) {
+        API.initHttpState();
+        return new Promise(resolve => {
+            $.ajax({
+                url: serverHost + "/accounts/index/" + userId,
                 contentType: 'application/json',
                 type: 'GET',
                 headers: API.getBearerAuthorizationToken(),

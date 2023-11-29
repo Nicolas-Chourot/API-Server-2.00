@@ -33,7 +33,7 @@ function getViewPortPhotosRanges() {
     VerticalPhotosCount = Math.round($("#content").innerHeight() / photoContainerHeight);
     HorizontalPhotosCount = Math.round($("#content").innerWidth() / photoContainerWidth);
     limit = (VerticalPhotosCount + 1) * HorizontalPhotosCount;
-    console.log("VerticalPhotosCount:",VerticalPhotosCount, "HorizontalPhotosCount:",HorizontalPhotosCount)
+    console.log("VerticalPhotosCount:", VerticalPhotosCount, "HorizontalPhotosCount:", HorizontalPhotosCount)
     offset = 0;
 }
 function installWindowResizeHandler() {
@@ -239,6 +239,21 @@ async function createProfil(profil) {
         renderError("Un problème est survenu.");
     }
 }
+async function deleteProfil() {
+    let loggedUser = API.retrieveLoggedUser();
+    if (await API.unsubscribeAccount(loggedUser.Id)) {
+        renderLoginForm();
+    } else {
+        renderError("Un problème est survenu.");
+    }
+}
+async function adminDeleteAccount(userId) {
+    if (await API.unsubscribeAccount(userId)) {
+        renderManageUsers();
+    } else {
+        renderError("Un problème est survenu.");
+    }
+}
 async function newPhoto(photo) {
     let loggedUser = API.retrieveLoggedUser();
     photo.OwnerId = loggedUser.Id;
@@ -426,7 +441,7 @@ async function renderPhotosList(appendToView = false) {
     let queryString = appendToView ? "?sort=date,desc&limit=" + limit + "&offset=" + offset : "?sort=date,desc&limit=" + photosCount + "&offset=" + 0;
     console.log(limit, offset, appendToView);
     let photos = await API.GetPhotos(queryString);
-   
+
     if (!photos) {
         renderError("Un problème est survenu.");
     } else {
@@ -441,7 +456,7 @@ async function renderPhotosList(appendToView = false) {
         } else {
             photosLayout = $("#photosLayout");
         }
-        
+
         if (photos.data.length > 0) {
             let loggedUser = API.retrieveLoggedUser();
             switch (sortType) {
@@ -451,11 +466,11 @@ async function renderPhotosList(appendToView = false) {
                 case "owner": photos.data = photos.data.filter(p => { return p.OwnerId == loggedUser.Id; }); break;
             }
             photos.data.forEach(photo => { photosLayout.append(renderPhoto(photo, loggedUser)); });
-           
+
             $("#content").off();
             $("#content").on("scroll", function () {
                 if ($("#content").scrollTop() + $("#content").innerHeight() > ($("#photosLayout").height() /*- photoContainerHeight*/)) {
-                    offset ++;
+                    offset++;
                     renderPhotosList(true /* appendToView */);
                 }
             });
@@ -851,14 +866,54 @@ async function renderManageUsers() {
                     renderManageUsers();
                 });
                 $(".removeUserCmd").on("click", function () {
-                    //let userId = $(this).attr("userId");
-                    renderManageUsers();
+                    let userId = $(this).attr("userId");
+                    renderConfirmDeleteAccount(userId);
                 });
             }
         } else
             renderVerify();
     } else
         renderLoginForm();
+}
+async function renderConfirmDeleteAccount(userId) {
+    timeout();
+    let loggedUser = API.retrieveLoggedUser();
+    if (loggedUser) {
+        let userToDelete = (await API.GetAccount(userId)).data;
+        if (!API.error) {
+            eraseContent();
+            UpdateHeader("Retrait de compte", "confirmDeleteAccoun");
+            $("#newPhotoCmd").hide();
+            $("#content").append(`
+                <div class="content loginForm">
+                    <br>
+                    <div class="form UserRow ">
+                        <h4> Voulez-vous vraiment effacer cet usager et toutes ses photos? </h4>
+                        <div class="UserContainer noselect">
+                            <div class="UserLayout">
+                                <div class="UserAvatar" style="background-image:url('${userToDelete.Avatar}')"></div>
+                                <div class="UserInfo">
+                                    <span class="UserName">${userToDelete.Name}</span>
+                                    <a href="mailto:${userToDelete.Email}" class="UserEmail" target="_blank" >${userToDelete.Email}</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>           
+                    <div class="form">
+                        <button class="form-control btn-danger" id="deleteAccountCmd">Effacer</button>
+                        <br>
+                        <button class="form-control btn-secondary" id="abortDeleteAccountCmd">Annuler</button>
+                    </div>
+                </div>
+            `);
+            $("#deleteAccountCmd").on("click", function () {
+                adminDeleteAccount(userToDelete.Id);
+            });
+            $("#abortDeleteAccountCmd").on("click", renderManageUsers);
+        } else {
+            renderError("Une erreur est survenue");
+        }
+    }
 }
 function renderEditProfilForm() {
     timeout();
