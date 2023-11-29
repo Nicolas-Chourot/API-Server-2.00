@@ -196,7 +196,7 @@ async function login(credential) {
             if (!loggedUser.isBlocked)
                 renderPhotos();
             else {
-                loginMessage = "Votre compte a été par l'administrateur";
+                loginMessage = "Votre compte a été bloqué par l'administrateur";
                 renderLoginForm();
             }
         }
@@ -571,12 +571,12 @@ async function renderNewPhotoForm() {
             <input type='submit' name='submit' value="Enregistrer" class="form-control btn-primary">
         </form>
         <div class="cancel">
-            <button id="abortCmd" class="form-control btn-secondary">Annuler</button>
+            <button id="abortNewPhotoCmd" class="form-control btn-secondary">Annuler</button>
         </div>
     `);
     initFormValidation();
     initImageUploaders();
-    $('#abortCmd').on('click', renderPhotos);
+    $('#abortNewPhotoCmd').on('click', renderPhotos);
     $('#newPhotoForm').on("submit", function (event) {
         let photo = getFormData($('#newPhotoForm'));
         photo.Shared = $("#Shared").prop("checked");
@@ -639,12 +639,12 @@ async function renderEditPhotoForm(photoId) {
             <input type='submit' name='submit' value="Enregistrer" class="form-control btn-primary">
         </form>
         <div class="cancel">
-            <button id="abortCmd" class="form-control btn-secondary">Annuler</button>
+            <button id="abortEditPhotoCmd" class="form-control btn-secondary">Annuler</button>
         </div>
     `);
         initFormValidation();
         initImageUploaders();
-        $('#abortCmd').on('click', renderPhotos);
+        $('#abortEditPhotoCmd').on('click', renderPhotos);
         $('#editPhotoForm').on("submit", function (event) {
             let photo = getFormData($('#editPhotoForm'));
             photo.Shared = $("#Shared").prop("checked");
@@ -674,11 +674,11 @@ async function renderDeletePhotoForm(photoId) {
                 <br>
                 <button photoId=${photo.Id} class="deletePhotoCmd form-control btn-danger">Effacer la photo</button>
                 <br>
-                <button id="abortCmd" class="form-control btn-secondary">Annuler</button>
+                <button id="abortDeletePhotoCmd" class="form-control btn-secondary">Annuler</button>
             </div>
         `);
         $(".deletePhotoCmd").on("click", function () { deletePhoto($(this).attr("photoId")); })
-        $("#abortCmd").on("click", renderPhotos);
+        $("#abortDeletePhotoCmd").on("click", renderPhotos);
     } else
         renderError("Un problème est survenu.")
 }
@@ -783,13 +783,13 @@ function renderCreateProfil() {
             <input type='submit' name='submit' id='saveUser' value="Enregistrer" class="form-control btn-primary">
         </form>
         <div class="cancel">
-            <button class="form-control btn-secondary" id="abortCmd">Annuler</button>
+            <button class="form-control btn-secondary" id="abortCreateProfilCmd">Annuler</button>
         </div>
     `);
     $('#loginCmd').on('click', renderLoginForm);
     initFormValidation(); // important do to after all html injection!
     initImageUploaders();
-    $('#abortCmd').on('click', renderLoginForm);
+    $('#abortCreateProfilCmd').on('click', renderLoginForm);
     addConflictValidation(API.checkConflictURL(), 'Email', 'saveUser');
     $('#createProfilForm').on("submit", function (event) {
         let profil = getFormData($('#createProfilForm'));
@@ -939,20 +939,19 @@ function renderEditProfilForm() {
                 
             </form>
             <div class="cancel">
-                <button class="form-control btn-secondary" id="abortCmd">Annuler</button>
+                <button class="form-control btn-secondary" id="abortEditProfilCmd">Annuler</button>
             </div>
 
             <div class="cancel">
                 <hr>
-                <a href="confirmDeleteProfil.php">
-                    <button class="form-control btn-warning">Effacer le compte</button>
-                </a>
+                <button class="form-control btn-warning" id="confirmDelelteProfilCMD">Effacer le compte</button>
             </div>
         `);
         initFormValidation(); // important do to after all html injection!
         initImageUploaders();
         addConflictValidation(API.checkConflictURL(), 'Email', 'saveUser');
-        $('#abortCmd').on('click', renderPhotos);
+        $('#abortEditProfilCmd').on('click', renderPhotos);
+        $('#confirmDelelteProfilCMD').on('click', renderConfirmDelelteProfil);
         $('#editProfilForm').on("submit", function (event) {
             let profil = getFormData($('#editProfilForm'));
             delete profil.matchedPassword;
@@ -961,6 +960,28 @@ function renderEditProfilForm() {
             showWaitingGif();
             editProfil(profil);
         });
+    }
+}
+function renderConfirmDelelteProfil() {
+    timeout();
+    let loggedUser = API.retrieveLoggedUser();
+    if (loggedUser) {
+        eraseContent();
+        UpdateHeader("Retrait de compte", "confirmDeleteProfil");
+        $("#newPhotoCmd").hide();
+        $("#content").append(`
+            <div class="content loginForm">
+                <br>
+                
+                <div class="form">
+                 <h3> Voulez-vous vraiment effacer votre compte? </h3>
+                    <button class="form-control btn-danger">Effacer mon compte</button>
+                    <br>
+                    <button class="form-control btn-secondary" id="cancelDeleteProfilCmd">Annuler</button>
+                </div>
+            </div>
+        `);
+        $('#cancelDeleteProfilCmd').on('click', renderEditProfilForm);
     }
 }
 function renderExpiredSession() {
