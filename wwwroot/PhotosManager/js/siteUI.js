@@ -688,7 +688,6 @@ function renderVerify() {
     $("#newPhotoCmd").hide();
     $("#content").append(`
         <div class="content">
-            
             <form class="form" id="verifyForm">
                 <b>Veuillez entrer le code de vérification de que vous avez reçu par courriel</b>
                 <input  type='text' 
