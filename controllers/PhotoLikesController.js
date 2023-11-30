@@ -41,10 +41,10 @@ export default
             this.addLikeToPhoto(data.PhotoId, 1);
             super.post(data);
         } else {
-            this.remove(data);
+            this.removeLike(data);
         }
     }
-    remove(data) {
+    removeLike(data) {
         let like = this.find(data.PhotoId, data.UserId);
         if (like) {
             this.addLikeToPhoto(like.PhotoId, -1);

@@ -1,4 +1,7 @@
 import UserModel from '../models/user.js';
+import PhotoModel from '../models/photo.js';
+import PhotoLikeModel from '../models/photoLike.js';
+import TokenModel from '../models/token.js';
 import Repository from '../models/repository.js';
 import TokenManager from '../tokensManager.js';
 import * as utilities from "../utilities.js";
@@ -9,6 +12,9 @@ import Authorizations from '../authorizations.js';
 export default class AccountsController extends Controller {
     constructor(HttpContext) {
         super(HttpContext, new Repository(new UserModel()), Authorizations.admin());
+        this.photosRepository = new Repository(new PhotoModel());
+        this.photoLikesRepository = new Repository(new PhotoLikeModel());
+        this.tokensRepository = new Repository(new TokenModel());
     }
     index(id) {
         if (id != undefined) {
@@ -178,6 +184,7 @@ export default class AccountsController extends Controller {
                     let updatedUser = this.repository.update(user.Id, user);
                     if (this.repository.model.state.isValid) {
                         this.HttpContext.response.updated(updatedUser);
+                        this.photosRepository.newETag(); // client side related photos must be updated 
                     }
                     else {
                         if (this.repository.model.state.inConflict)
@@ -194,7 +201,15 @@ export default class AccountsController extends Controller {
     }
     // GET:account/remove/id
     remove(id) { // warning! this is not an API endpoint
-        if (Authorizations.writeGranted(this.HttpContext, Authorizations.user()))
+        if (Authorizations.writeGranted(this.HttpContext, Authorizations.user())) {
+            let userPhotos = this.photosRepository.findByFilter(photo => photo.OwnerId == id);
+            userPhotos.forEach( photo => {
+                this.photoLikesRepository.keepByFilter(like => like.PhotoId != photo.Id);
+            });
+            this.photosRepository.keepByFilter(photo => photo.OwnerId != id);
+            this.photoLikesRepository.keepByFilter(photo => photo.UserId != id);
+            this.tokensRepository.keepByFilter(token => token.User.Id != id);
             super.remove(id);
+        }
     }
 }

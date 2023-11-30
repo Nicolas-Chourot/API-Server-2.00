@@ -36,32 +36,10 @@ export default
         return null;
     }
     static logout(userId) {
-        let tokens = tokensRepository.getAll();
-        let index = 0;
-        let indexToDelete = [];
-        for (let token of tokens) {
-            if (token.User.Id == userId) {
-                indexToDelete.push(index);
-                console.log("User " + token.User.Name + " logged out");
-            }
-            index++;
-        }
-        tokensRepository.removeByIndex(indexToDelete);
+        tokensRepository.keepByFilter(token => token.User.Id != userId);
     }
     static clean() {
-        let tokens = tokensRepository.getAll();
-        let now = utilities.nowInSeconds();
-        let index = 0;
-        let indexToDelete = [];
-        for (let token of tokens) {
-            if (token.Expire_Time < now) {
-                indexToDelete.push(index);
-                console.log("Access token of user " + token.User.Name + " expired");
-            }
-            index++;
-        }
-        if (index > 0)
-            tokensRepository.removeByIndex(indexToDelete);
+        tokensRepository.keepByFilter(token => token.Expire_Time > now);
     }
     static find(access_token, renew = true) {
         let token = tokensRepository.findByField('Access_token', access_token);
