@@ -215,7 +215,7 @@ async function login(credential) {
                 renderPhotos();
             else {
                 loginMessage = "Votre compte a été bloqué par l'administrateur";
-                renderLoginForm();
+                logout();
             }
         }
         else
