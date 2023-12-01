@@ -127,7 +127,7 @@ export default class AccountsController extends Controller {
             let newUser = this.repository.add(user);
             if (this.repository.model.state.isValid) {
                 this.HttpContext.response.created(newUser);
-               // todo restore gmail credential this.sendVerificationEmail(newUser);
+                this.sendVerificationEmail(newUser);
             } else {
                 if (this.repository.model.state.inConflict)
                     this.HttpContext.response.conflict(this.repository.model.state.errors);

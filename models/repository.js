@@ -9,7 +9,6 @@ import CachedRequests from "../CachedRequestsManager.js";
 globalThis.jsonFilesPath = "jsonFiles";
 globalThis.repositoryEtags = {};
 
-
 export default class Repository {
     constructor(ModelClass, cached = true) {
         this.objectsList = null;
