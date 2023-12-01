@@ -127,7 +127,7 @@ export default class AccountsController extends Controller {
             let newUser = this.repository.add(user);
             if (this.repository.model.state.isValid) {
                 this.HttpContext.response.created(newUser);
-                this.sendVerificationEmail(newUser);
+               // todo restore gmail credential this.sendVerificationEmail(newUser);
             } else {
                 if (this.repository.model.state.inConflict)
                     this.HttpContext.response.conflict(this.repository.model.state.errors);
@@ -207,9 +207,18 @@ export default class AccountsController extends Controller {
                 this.photoLikesRepository.keepByFilter(like => like.PhotoId != photo.Id);
             });
             this.photosRepository.keepByFilter(photo => photo.OwnerId != id);
+            let userLikes = this.photoLikesRepository.findByFilter(like => like.UserId == id);
+            userLikes.forEach(like => {
+                let photoLiked = this.photosRepository.findByField("Id", like.PhotoId);
+                photoLiked.Likes --;
+                this.photosRepository.update(photoLiked.Id, photoLiked);
+            });
             this.photoLikesRepository.keepByFilter(photo => photo.UserId != id);
             this.tokensRepository.keepByFilter(token => token.User.Id != id);
+            let previousAuthorization = this.authorizations;
+            this.authorizations = Authorizations.user();
             super.remove(id);
+            this.authorizations = previousAuthorization;
         }
     }
 }

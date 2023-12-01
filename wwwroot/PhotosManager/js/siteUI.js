@@ -1,6 +1,7 @@
 //<span class="cmdIcon fa-solid fa-ellipsis-vertical"></span>
 let contentScrollPosition = 0;
 let sortType = "date";
+let keywords = "";
 let loginMessage = "";
 let Email = "";
 let EmailError = "";
@@ -72,7 +73,8 @@ function attachCmd() {
     $('#sortByOwners').on("click", () => { sortType = "owners"; refreshHeader(); renderPhotos(); });
     $('#sortByLikes').on("click", () => { sortType = "likes"; refreshHeader(); renderPhotos(); });
     $('#ownerOnly').on("click", () => { sortType = "owner"; refreshHeader(); renderPhotos(); });
-
+    $('#byKeywords').on("click", () => { sortType = "keywords"; refreshHeader(); renderPhotos(); });
+    $("#setSearchKeywordsCmd").on("click", () => { keywords = $("#keywords").val(); renderPhotos(); });
     $('#aboutCmd').on("click", renderAbout);
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -114,16 +116,20 @@ function viewMenu(viewName) {
         sortByOwners = (sortType == "owners") ? checkIcon : uncheckIcon;
         sortByLikes = (sortType == "likes") ? checkIcon : uncheckIcon;
         ownerOnly = (sortType == "owner") ? checkIcon : uncheckIcon;
+        byKeywords = (sortType == "keywords") ? checkIcon : uncheckIcon;
         return `
             <div class="dropdown-divider"></div>
             <span class="dropdown-item" id="sortByDate">
                 ${sortByDateCheck} <i class="menuIcon fa fa-calendar mx-2"></i>Photos par date de création
             </span>
-            <span class="dropdown-item" id="sortByOwners">
-                ${sortByOwners} <i class="menuIcon fa fa-users mx-2"></i>Photos par créateur
-            </span>
             <span class="dropdown-item" id="sortByLikes">
                 ${sortByLikes} <i class="menuIcon fa-solid fa-heart mx-2"></i>Photos les plus aimées
+            </span>
+            <span class="dropdown-item" id="byKeywords">
+                ${byKeywords} <i class="menuIcon fa-solid fa-search mx-2"></i>Photos par mots-clés
+            </span>
+            <span class="dropdown-item" id="sortByOwners">
+                ${sortByOwners} <i class="menuIcon fa fa-users mx-2"></i>Photos par créateur
             </span>
             <span class="dropdown-item" id="ownerOnly">
                 ${ownerOnly} <i class="menuIcon fa fa-user mx-2"></i>Mes photos
@@ -173,6 +179,18 @@ function UpdateHeader(viewTitle, viewName) {
 
         </div>
     `);
+    if (sortType == "keywords" && viewName == "photosList") {
+        $("#customHeader").show();
+        $("#customHeader").empty();
+        $("#customHeader").append(`
+            <div class="searchContainer">
+                <input type="search" class="form-control" placeholder="Recherche par mots-clés" id="keywords" value="${keywords}"/>
+                <i class="cmdIcon fa fa-search" id="setSearchKeywordsCmd"></i>
+            </div>
+        `);
+    } else {
+        $("#customHeader").hide();
+    }
     attachCmd();
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -206,11 +224,8 @@ async function login(credential) {
 }
 async function logout() {
     console.log('logout');
-    if (await API.logout()) {
-        renderLoginForm();
-    } else {
-        renderError("Un problème est survenu.");
-    }
+    await API.logout();
+    renderLoginForm();
 }
 function isVerified() {
     let loggedUser = API.retrieveLoggedUser();
@@ -226,7 +241,15 @@ async function verify(verifyCode) {
 }
 async function editProfil(profil) {
     if (await API.modifyUserProfil(profil)) {
-        renderPhotos();
+        let loggedUser = API.retrieveLoggedUser();
+        if (loggedUser) {
+            if (isVerified()) {
+                renderPhotos();
+            } else
+                renderVerify();
+        } else
+            renderLoginForm();
+
     } else {
         renderError("Un problème est survenu.");
     }
@@ -239,19 +262,21 @@ async function createProfil(profil) {
         renderError("Un problème est survenu.");
     }
 }
-async function deleteProfil() {
-    let loggedUser = API.retrieveLoggedUser();
-    if (await API.unsubscribeAccount(loggedUser.Id)) {
-        renderLoginForm();
-    } else {
-        renderError("Un problème est survenu.");
-    }
-}
 async function adminDeleteAccount(userId) {
     if (await API.unsubscribeAccount(userId)) {
         renderManageUsers();
     } else {
         renderError("Un problème est survenu.");
+    }
+}
+async function deleteProfil() {
+    let loggedUser = API.retrieveLoggedUser();
+    if (loggedUser) {
+        if (await API.unsubscribeAccount(loggedUser.Id)) {
+            loginMessage = "Votre compte a été effacé.";
+            logout();
+        } else
+            renderError("Un problème est survenu.");
     }
 }
 async function newPhoto(photo) {
@@ -382,18 +407,11 @@ function installPeriodicRefreshPhotosList() {
 }
 async function renderPhotos() {
     timeout();
-    let loggedUser = API.retrieveLoggedUser();
-    if (loggedUser) {
-        if (isVerified()) {
-            showWaitingGif();
-            UpdateHeader('Liste des photos', 'photosList')
-            $("#newPhotoCmd").show();
-            $("#abort").hide();
-            renderPhotosList();
-        } else
-            renderVerify();
-    } else
-        renderLoginForm();
+    showWaitingGif();
+    UpdateHeader('Liste des photos', 'photosList')
+    $("#newPhotoCmd").show();
+    $("#abort").hide();
+    renderPhotosList();
 }
 function compareOwnerName(p1, p2) {
     return p1.Owner.Name.localeCompare(p2.Owner.Name);
@@ -439,6 +457,17 @@ function renderPhoto(photo, loggedUser) {
 async function renderPhotosList(appendToView = false) {
     let photosCount = limit * (offset + 1);
     let queryString = appendToView ? "?sort=date,desc&limit=" + limit + "&offset=" + offset : "?sort=date,desc&limit=" + photosCount + "&offset=" + 0;
+    if (sortType == "keywords") {
+        if (keywords != "") {
+            let searchQueryString = "&Title=";
+            let keys = keywords.split(" ");
+            keys.forEach(key => {
+                searchQueryString += "*" + key + "*,";
+            });
+            searchQueryString = searchQueryString.slice(0, -1);
+            queryString += searchQueryString;
+        }
+    }
     console.log(limit, offset, appendToView);
     let photos = await API.GetPhotos(queryString);
 
@@ -464,6 +493,7 @@ async function renderPhotosList(appendToView = false) {
                 case "owners": photos.data.sort(compareOwnerName); break;
                 case "likes": photos.data.sort(compareLikes); break;
                 case "owner": photos.data = photos.data.filter(p => { return p.OwnerId == loggedUser.Id; }); break;
+                case "keywords": break;
             }
             photos.data.forEach(photo => { photosLayout.append(renderPhoto(photo, loggedUser)); });
 
@@ -1005,7 +1035,7 @@ function renderEditProfilForm() {
         initImageUploaders();
         addConflictValidation(API.checkConflictURL(), 'Email', 'saveUser');
         $('#abortEditProfilCmd').on('click', renderPhotos);
-        $('#confirmDelelteProfilCMD').on('click', renderConfirmDelelteProfil);
+        $('#confirmDelelteProfilCMD').on('click', renderConfirmDeleteProfil);
         $('#editProfilForm').on("submit", function (event) {
             let profil = getFormData($('#editProfilForm'));
             delete profil.matchedPassword;
@@ -1016,7 +1046,7 @@ function renderEditProfilForm() {
         });
     }
 }
-function renderConfirmDelelteProfil() {
+function renderConfirmDeleteProfil() {
     timeout();
     let loggedUser = API.retrieveLoggedUser();
     if (loggedUser) {
@@ -1029,12 +1059,13 @@ function renderConfirmDelelteProfil() {
                 
                 <div class="form">
                  <h3> Voulez-vous vraiment effacer votre compte? </h3>
-                    <button class="form-control btn-danger">Effacer mon compte</button>
+                    <button class="form-control btn-danger" id="deleteProfilCmd">Effacer mon compte</button>
                     <br>
                     <button class="form-control btn-secondary" id="cancelDeleteProfilCmd">Annuler</button>
                 </div>
             </div>
         `);
+        $("#deleteProfilCmd").on("click", deleteProfil);
         $('#cancelDeleteProfilCmd').on('click', renderEditProfilForm);
     }
 }
