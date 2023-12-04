@@ -61,7 +61,6 @@ export default class AccountsController extends Controller {
     }
     sendVerificationEmail(user) {
         // bypass model bindeExtraData wich hide the user verifyCode
-        user = this.repository.findByField("Id", user.Id);
         let html = `
                 Bonjour ${user.Name}, <br /> <br />
                 Voici votre code pour confirmer votre adresse de courriel
@@ -124,11 +123,13 @@ export default class AccountsController extends Controller {
     register(user) {
         if (this.repository != null) {
             user.Created = utilities.nowInSeconds();
-            user.VerifyCode = utilities.makeVerifyCode(6);
+            let verifycode = utilities.makeVerifyCode(6)
+            user.VerifyCode = verifycode;
             user.Authorizations = Authorizations.user();
             let newUser = this.repository.add(user);
             if (this.repository.model.state.isValid) {
                 this.HttpContext.response.created(newUser);
+                newUser.Verifycode = verifycode;
                 this.sendVerificationEmail(newUser);
             } else {
                 if (this.repository.model.state.inConflict)
