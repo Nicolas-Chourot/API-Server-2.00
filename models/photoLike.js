@@ -17,8 +17,6 @@ export default class PhotoLike extends Model {
         let user = usersRepository.get(instance.UserId);
         if (user) {
             instance.UserName = user.Name;
-            //delete instance.PhotoId;
-            //delete instance.UserId;
         }
         return instance;
     }

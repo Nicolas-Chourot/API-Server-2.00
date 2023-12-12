@@ -25,13 +25,16 @@ export default
         let PhotoId = this.HttpContext.path.params.PhotoId;
         let UserId = this.HttpContext.path.params.UserId;
         if (UserId) {
-            let like = this.find(PhotoId, UserId);
+            let like = this.repository.getAll({ PhotoId, UserId });
             if (like) {
-                super.get(like.Id);
+                super.get(like[0].Id);
             } else
                 this.HttpContext.response.notFound();
         } else {
-            super.get();
+            if (PhotoId) {
+                this.HttpContext.response.JSON(this.repository.getAll({PhotoId}));
+            } else
+                super.get();
         }
     }
     post(data) {
