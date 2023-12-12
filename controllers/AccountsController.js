@@ -61,7 +61,6 @@ export default class AccountsController extends Controller {
     }
     sendVerificationEmail(user) {
         // bypass model bindeExtraData wich hide the user verifyCode
-        user = this.repository.findByField("Id", user.Id);
         let html = `
                 Bonjour ${user.Name}, <br /> <br />
                 Voici votre code pour confirmer votre adresse de courriel
@@ -124,13 +123,22 @@ export default class AccountsController extends Controller {
     register(user) {
         if (this.repository != null) {
             user.Created = utilities.nowInSeconds();
+<<<<<<< HEAD
             let verifyCode = utilities.makeVerifyCode(6);
             user.VerifyCode = verifyCode;
+=======
+            let verifycode = utilities.makeVerifyCode(6)
+            user.VerifyCode = verifycode;
+>>>>>>> 986462d6c9161376b15bf436f8a04132920a6b59
             user.Authorizations = Authorizations.user();
             let newUser = this.repository.add(user);
             if (this.repository.model.state.isValid) {
                 this.HttpContext.response.created(newUser);
+<<<<<<< HEAD
                 newUser.Verifycode = verifyCode;
+=======
+                newUser.Verifycode = verifycode;
+>>>>>>> 986462d6c9161376b15bf436f8a04132920a6b59
                 this.sendVerificationEmail(newUser);
             } else {
                 if (this.repository.model.state.inConflict)
@@ -176,7 +184,6 @@ export default class AccountsController extends Controller {
                 let foundedUser = this.repository.findByField("Id", user.Id);
                 if (foundedUser != null) {
                     user.Authorizations = foundedUser.Authorizations; // user cannot change its own authorizations
-                    user.VerifyCode = foundedUser.VerifyCode;
                     if (user.Password == '') { // password not changed
                         user.Password = foundedUser.Password;
                     }
