@@ -182,6 +182,8 @@ export default class AccountsController extends Controller {
                     if (user.Email != foundedUser.Email) {
                         user.VerifyCode = utilities.makeVerifyCode(6);
                         this.sendVerificationEmail(user);
+                    } else {
+                        user.VerifyCode = foundedUser.VerifyCode;
                     }
                     let updatedUser = this.repository.update(user.Id, user);
                     if (this.repository.model.state.isValid) {
@@ -205,14 +207,14 @@ export default class AccountsController extends Controller {
     remove(id) { // warning! this is not an API endpoint
         if (Authorizations.writeGranted(this.HttpContext, Authorizations.user())) {
             let userPhotos = this.photosRepository.findByFilter(photo => photo.OwnerId == id);
-            userPhotos.forEach( photo => {
+            userPhotos.forEach(photo => {
                 this.photoLikesRepository.keepByFilter(like => like.PhotoId != photo.Id);
             });
             this.photosRepository.keepByFilter(photo => photo.OwnerId != id);
             let userLikes = this.photoLikesRepository.findByFilter(like => like.UserId == id);
             userLikes.forEach(like => {
                 let photoLiked = this.photosRepository.findByField("Id", like.PhotoId);
-                photoLiked.Likes --;
+                photoLiked.Likes--;
                 this.photosRepository.update(photoLiked.Id, photoLiked);
             });
             this.photoLikesRepository.keepByFilter(photo => photo.UserId != id);
