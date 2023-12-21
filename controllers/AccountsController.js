@@ -203,9 +203,11 @@ export default class AccountsController extends Controller {
         } else
             this.HttpContext.response.unAuthorized();
     }
+
     // GET:account/remove/id
-    remove(id) { // warning! this is not an API endpoint
-        if (Authorizations.writeGranted(this.HttpContext, Authorizations.user())) {
+    remove(id) { // warning! this is not an API endpoint 
+        // todo make sure that the requester has legitimity to delete ethier itself or its an admin
+        if (Authorizations.writeGrantedAdminOrOwner(this.HttpContext, Authorizations.user(), id)) {
             let userPhotos = this.photosRepository.findByFilter(photo => photo.OwnerId == id);
             userPhotos.forEach(photo => {
                 this.photoLikesRepository.keepByFilter(like => like.PhotoId != photo.Id);
@@ -220,9 +222,9 @@ export default class AccountsController extends Controller {
             this.photoLikesRepository.keepByFilter(photo => photo.UserId != id);
             this.tokensRepository.keepByFilter(token => token.User.Id != id);
             let previousAuthorization = this.authorizations;
-            this.authorizations = Authorizations.user();
+            this.authorizations = Authorizations.user(); // surpass user authorization
             super.remove(id);
-            this.authorizations = previousAuthorization;
+            this.authorizations = previousAuthorization; // restore admin authorization
         }
     }
 }

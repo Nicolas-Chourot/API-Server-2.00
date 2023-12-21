@@ -17,7 +17,7 @@ export default
         photoRepository.update(photo.Id, photo);
     }
     find(PhotoId, UserId) {
-        let likes = this.repository.getAll({ PhotoId, UserId });
+        let likes = this.repository.getAll({ PhotoId, UserId }, true);
         if (likes.length > 0) return likes[0];
         return null;
     }
@@ -26,7 +26,7 @@ export default
         let UserId = this.HttpContext.path.params.UserId;
         if (UserId) {
             let like = this.repository.getAll({ PhotoId, UserId });
-            if (like) {
+            if (like.length > 0) {
                 super.get(like[0].Id);
             } else
                 this.HttpContext.response.notFound();

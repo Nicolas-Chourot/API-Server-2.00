@@ -127,13 +127,16 @@ export default class Repository {
         }
         return false;
     }
-    getAll(params = null) {
+    getAll(params = null, dontBind = false) {
         let objectsList = this.objects();
         let bindedDatas = [];
         if (objectsList)
             for (let data of objectsList) {
-                bindedDatas.push(this.model.bindExtraData(data));
-            };
+                if (dontBind)
+                    bindedDatas.push(data);
+                else
+                    bindedDatas.push(this.model.bindExtraData(data));
+            }
         let collectionFilter = new CollectionFilter(bindedDatas, params);
         return collectionFilter.get();
     }

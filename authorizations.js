@@ -66,4 +66,20 @@ export default class Authorizations {
         }
         return true;
     }
+    static writeGrantedAdminOrOwner(HttpContext, authorizations, id) {
+        if (authorizations) {
+            if (authorizations.readAccess == 0) return true;
+            // Extract bearer token from head of the http request
+            if (HttpContext.req.headers["authorization"] != undefined) {
+                let token = HttpContext.req.headers["authorization"].replace('Bearer ', '');
+                token = TokenManager.find(token);
+                if (token)
+                    return (token.User.Authorizations.writeAccess >= authorizations.writeAccess || token.User.Id == id);
+                else
+                    return false;
+            } else
+                return false;
+        }
+        return true;
+    }
 }

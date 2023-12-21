@@ -9,7 +9,7 @@ let passwordError = "";
 let periodicRefreshPhotosListPeriod = 5; // seconds
 let currentETag = "";
 let currentViewName = "photosList";
-let delayTimeOut = 200; // seconds
+let delayTimeOut = 2000; // seconds
 let photoContainerWidth = 400;
 let photoContainerHeight = 400;
 let limit;

@@ -11,6 +11,12 @@ export default
         this.photoLikesRepository = new Repository(new PhotoLikeModel());
     }
 
+    put(photo) {
+        let foundPhoto = this.repository.get(photo.Id);
+        if (foundPhoto) 
+            photo.OwnerId = foundPhoto.OwnerId;
+        super.put(photo);
+    }
     remove(photoId) {
         this.photoLikesRepository.keepByFilter(like => like.PhotoId != photoId);
         super.remove(photoId);
