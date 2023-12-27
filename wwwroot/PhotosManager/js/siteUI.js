@@ -536,8 +536,8 @@ async function renderPhotoDetails(photoId) {
     timeout();
     let photo = await API.GetPhotosById(photoId);
     if (photo) {
-        let userLike = await API.GetUserPhotoLike(photo.Id);
-        let likes = await API.GetPhotoLikes(photo.Id);
+        let userLike = await API.GetUserPhotolike(photo.Id);
+        let likes = await API.GetPhotolikes(photo.Id);
         let likesList = "";
         likes.forEach(like => {
             likesList += like.UserName + "\n";
@@ -564,7 +564,7 @@ async function renderPhotoDetails(photoId) {
             <div class="photoDetailsDescription">${photo.Description}</div>`
         );
         $("#addRemoveLikeCmd").on("click", () => {
-            API.AddRemovePhotoLike(photo.Id);
+            API.AddRemovePhotolike(photo.Id);
             renderPhotoDetails(photo.Id);
         });
     }

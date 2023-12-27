@@ -1,14 +1,14 @@
 import Authorizations from '../authorizations.js';
 import Repository from '../models/repository.js';
-import PhotoLikeModel from '../models/photoLike.js';
+import PhotolikeModel from '../models/photolike.js';
 import PhotoModel from '../models/photo.js';
 import Controller from './Controller.js';
 import * as utilities from "../utilities.js";
 
 export default
-    class PhotoLikes extends Controller {
+    class Photolikes extends Controller {
     constructor(HttpContext) {
-        super(HttpContext, new Repository(new PhotoLikeModel()), Authorizations.user());
+        super(HttpContext, new Repository(new PhotolikeModel()), Authorizations.user());
     }
     addLikeToPhoto(id, amount) {
         let photoRepository = new Repository(new PhotoModel());

@@ -5,7 +5,7 @@
 
 const serverHost = "http://localhost:5000";
 const photos_API = "/api/photos";
-const photoLikes_API = "/api/photolikes";
+const photolikes_API = "/api/photolikes";
 class API {
     static initHttpState() {
         this.currentHttpError = "";
@@ -230,11 +230,11 @@ class API {
             });
         });
     }
-    static GetUserPhotoLike(photoId) {
+    static GetUserPhotolike(photoId) {
         API.initHttpState();
         return new Promise(resolve => {
             $.ajax({
-                url: serverHost + photoLikes_API + `?PhotoId=${photoId}&UserId=${API.retrieveLoggedUser().Id}`,
+                url: serverHost + photolikes_API + `?PhotoId=${photoId}&UserId=${API.retrieveLoggedUser().Id}`,
                 type: 'GET',
                 headers: API.getBearerAuthorizationToken(),
                 success: data => { resolve(data); },
@@ -242,11 +242,11 @@ class API {
             });
         });
     }
-    static GetPhotoLikes(photoId) {
+    static GetPhotolikes(photoId) {
         API.initHttpState();
         return new Promise(resolve => {
             $.ajax({
-                url: serverHost + photoLikes_API + `?PhotoId=${photoId}`,
+                url: serverHost + photolikes_API + `?PhotoId=${photoId}`,
                 type: 'GET',
                 headers: API.getBearerAuthorizationToken(),
                 success: data => { resolve(data); },
@@ -254,11 +254,11 @@ class API {
             });
         });
     }
-    static AddRemovePhotoLike(photoId) {
+    static AddRemovePhotolike(photoId) {
         API.initHttpState();
         return new Promise(resolve => {
             $.ajax({
-                url: serverHost + photoLikes_API,
+                url: serverHost + photolikes_API,
                 type: 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify({ PhotoId: photoId, UserId: API.retrieveLoggedUser().Id }),

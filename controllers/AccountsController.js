@@ -1,6 +1,6 @@
 import UserModel from '../models/user.js';
 import PhotoModel from '../models/photo.js';
-import PhotoLikeModel from '../models/photoLike.js';
+import PhotolikeModel from '../models/photolike.js';
 import TokenModel from '../models/token.js';
 import Repository from '../models/repository.js';
 import TokenManager from '../tokensManager.js';
@@ -13,7 +13,7 @@ export default class AccountsController extends Controller {
     constructor(HttpContext) {
         super(HttpContext, new Repository(new UserModel()), Authorizations.admin());
         this.photosRepository = new Repository(new PhotoModel());
-        this.photoLikesRepository = new Repository(new PhotoLikeModel());
+        this.photolikesRepository = new Repository(new PhotolikeModel());
         this.tokensRepository = new Repository(new TokenModel());
     }
     index(id) {
@@ -210,16 +210,16 @@ export default class AccountsController extends Controller {
         if (Authorizations.writeGrantedAdminOrOwner(this.HttpContext, Authorizations.user(), id)) {
             let userPhotos = this.photosRepository.findByFilter(photo => photo.OwnerId == id);
             userPhotos.forEach(photo => {
-                this.photoLikesRepository.keepByFilter(like => like.PhotoId != photo.Id);
+                this.photolikesRepository.keepByFilter(like => like.PhotoId != photo.Id);
             });
             this.photosRepository.keepByFilter(photo => photo.OwnerId != id);
-            let userLikes = this.photoLikesRepository.findByFilter(like => like.UserId == id);
+            let userLikes = this.photolikesRepository.findByFilter(like => like.UserId == id);
             userLikes.forEach(like => {
-                let photoLiked = this.photosRepository.findByField("Id", like.PhotoId);
-                photoLiked.Likes--;
-                this.photosRepository.update(photoLiked.Id, photoLiked);
+                let photoliked = this.photosRepository.findByField("Id", like.PhotoId);
+                photoliked.Likes--;
+                this.photosRepository.update(photoliked.Id, photoliked);
             });
-            this.photoLikesRepository.keepByFilter(photo => photo.UserId != id);
+            this.photolikesRepository.keepByFilter(photo => photo.UserId != id);
             this.tokensRepository.keepByFilter(token => token.User.Id != id);
             let previousAuthorization = this.authorizations;
             this.authorizations = Authorizations.user(); // surpass user authorization
